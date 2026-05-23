@@ -1,0 +1,22 @@
+@apiKey = 513751AB-4E08-483C-B395-FA2CA10F9657
+@baseUrl = http://localhost:5000
+
+### Health Check - GET /api/health
+GET {{baseUrl}}/api
+x-api-key: {{apiKey}}
+
+### login - POST /api/auth/login
+POST {{baseUrl}}/api/auth/login
+x-api-key: {{apiKey}}
+Content-Type: application/json
+
+{
+    "email": "admin@admin.com",
+    "password": "comfortable"
+}
+
+### Employee Shift - GET /api/employee/shift
+GET {{baseUrl}}/api/employee
+x-api-key: {{apiKey}}
+user-id: 1
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjEsImVtYWlsIjoiYWRtaW5AYWRtaW4uY29tIiwiaWF0IjoxNzc5MjE4NDQzLCJleHAiOjE3NzkyMjIwNDN9.2qtWMeCC_zlirHNPPi_poa3MwVQwzuqWKEoPtDPKisY

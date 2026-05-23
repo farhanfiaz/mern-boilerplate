@@ -1,0 +1,14 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "strict": false,
+    "noUnusedLocals": false,
+    "noUnusedParameters": false,
+    "noImplicitAny": false,
+    "skipLibCheck": true,
+    "noEmit": false,
+    "outDir": "dist"
+  },
+  "include": ["server/**/*", "shared/**/*"],
+  "exclude": ["node_modules", "client/**/*", "**/*.test.ts", "**/*test*", "debug*", "test_*", "complete_*", "comprehensive_*", "simple_*", "workflow_*", "holiday_*", "manager_*", "team_*", "timezone_*", "month_*", "previous_*", "process_*"]
+}

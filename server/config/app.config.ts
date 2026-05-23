@@ -1,0 +1,28 @@
+import * as dotenv from 'dotenv';
+dotenv.config();
+
+const env = process.env.NODE_ENV || "development";
+
+const config = {
+  environment: env,
+  isDevelopment: env == "development",
+  isProduction: env == "production",
+  port: parseInt(process.env.VITE_PORT || "5000"),
+  host: process.env.HOST || "0.0.0.0",
+
+  database: {
+    url: process.env.DATABASE_URL!,
+  },
+  apiKeys: process.env.VITE_API_KEYS,
+  security: {
+    jwtSecret: process.env.VITE_JWT_SECRET!,
+    refreshSecret: process.env.VITE_REFRESH_SECRET!,
+    jwtExpiresIn: process.env.VITE_JWT_EXPIRES_IN!,
+    refreshExpiresIn: process.env.VITE_REFRESH_EXPIRES_IN!,
+  },
+  frontend: {
+    url: process.env.VITE_FRONTEND_URL,
+  },
+};
+
+export default config;

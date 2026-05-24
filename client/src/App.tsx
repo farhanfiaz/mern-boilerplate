@@ -1,20 +1,35 @@
+import { StrictMode } from 'react'
 import './App.css'
+import { QueryProvider } from './providers/query-provider'
+import { AuthProvider } from './context/AuthContext'
+import { BrowserRouter } from 'react-router-dom'
+import AppRoutes from './routes/AppRoutes'
+import { ToastContainer } from 'react-toastify'
 
 function App() {
 
   return (
-    <><div className="p-8">
-    <article className="prose prose-lg">
-      <h1>Typography Working</h1>
-      <p>This paragraph should have spacing and styling.</p>
-  
-      <ul>
-        <li>First item</li>
-        <li>Second item</li>
-      </ul>
-    </article>
-  </div>
-    </>
+    <StrictMode>
+      <QueryProvider>
+        <AuthProvider>
+          <BrowserRouter>
+            <AppRoutes />
+
+            {/* ✅ GLOBAL TOAST CONTAINER */}
+            <ToastContainer
+              position="top-right"
+              autoClose={3000}
+              hideProgressBar={false}
+              newestOnTop
+              closeOnClick
+              pauseOnHover
+              draggable
+              theme="light"
+            />
+          </BrowserRouter>
+        </AuthProvider>
+      </QueryProvider>
+    </StrictMode>
   )
 }
 

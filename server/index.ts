@@ -57,7 +57,7 @@ app.use(
 
 // ---------------- ROUTES ----------------
 app.get(
-  "/api",
+  "/api/health",
   authMiddleware.apiLimiter,
   (req: Request, res: Response) => {
     res.json({ message: "Hello from backend API" });

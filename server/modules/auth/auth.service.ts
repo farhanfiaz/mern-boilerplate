@@ -5,6 +5,7 @@ import { eq, and, isNull } from "drizzle-orm";
 import bcrypt from "bcryptjs";
 import jwt, { Secret, SignOptions } from "jsonwebtoken";
 import appConfig from "@server/config/app.config";
+import { RoleName } from "@server/enums/role.enum";
 
 export class AuthService {
     constructor() {
@@ -111,7 +112,6 @@ export class AuthService {
         );
     }
     async register(data: RegisterDto): Promise<AuthResponse> {
-        /** check email is unique */
         const isEmailExist = await db.query.users.findFirst(
             {
                 where: (users, { eq }) => eq(users.email, data.email)
@@ -119,6 +119,12 @@ export class AuthService {
         );
         if (isEmailExist) {
             throw new Error("user email already used..!");
+        }
+        const defaultRole = await db.query.roles.findFirst({
+            where: (role, { eq }) => (eq(role.name, RoleName.User))
+        });
+        if (!defaultRole) {
+            throw new Error("Default role not found");
         }
         const hashedPassword = await bcrypt.hash(data.password, 10);
         const [newUser] = await db
@@ -128,15 +134,10 @@ export class AuthService {
                 password: hashedPassword,
                 firstName: data.firstName,
                 lastName: data.lastName,
-                avatarUrl: data.file?.filename ?? null
+                avatarUrl: data.file?.filename ?? null,
+                username: data.email
             })
             .returning();
-        const defaultRole = await db.query.roles.findFirst({
-            where: (role, { eq }) => (eq(role.name, 'user'))
-        });
-        if (!defaultRole) {
-            throw new Error("Default role not found");
-        }
         await db.insert(userRoles).values({
             userId: newUser.id,
             roleId: defaultRole.id,

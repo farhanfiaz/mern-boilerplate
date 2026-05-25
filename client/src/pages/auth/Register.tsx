@@ -4,13 +4,11 @@ import { useAuth } from "../../context/AuthContext";
 import { RegisterUser } from "@/types/auth.types";
 
 export default function Register() {
-  const navigate = useNavigate();
   const { register, user } = useAuth();
   const [firstName, setFirstName] = useState<string>("");
   const [lastName, setLastName] = useState<string>("");
   const [email, setEmail] = useState<string>("");
   const [password, setPassword] = useState<string>("");
-  const [isRemember, setIsRememberMe] = useState<boolean>(false);
 
   if (user) {
     return <Navigate to="/dashboard" replace />;
@@ -21,7 +19,6 @@ export default function Register() {
     const registerUser: RegisterUser = {
       firstName: firstName,
       lastName: lastName,
-      userName: email,
       email: email,
       password: password
     };

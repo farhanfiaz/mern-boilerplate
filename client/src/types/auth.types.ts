@@ -8,7 +8,6 @@ export interface RegisterUser {
   password: string;
   firstName: string;
   lastName: string;
-  userName: string;
 }
 
 export type AuthResponse = {

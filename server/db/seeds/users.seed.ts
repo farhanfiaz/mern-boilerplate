@@ -3,6 +3,7 @@ import { db } from "../connection";
 import { roles, userRoles, users } from "../schema";
 import bcrypt from "bcryptjs";
 import { eq, and } from "drizzle-orm";
+import { RoleName } from "@server/enums/role.enum";
 
 export async function userSeed() {
   logger.info("🗄️ Seeding database...");
@@ -10,7 +11,7 @@ export async function userSeed() {
   const [userRole] = await db
     .select()
     .from(roles)
-    .where(eq(roles.name, "user"))
+    .where(eq(roles.name, RoleName.User))
     .limit(1);
 
   if (!userRole) {

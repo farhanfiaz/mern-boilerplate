@@ -2,14 +2,15 @@ import logger from "@server/utils/logger";
 import { db } from "../connection";
 import { roles } from "../schema";
 import { eq } from "drizzle-orm";
+import {RoleName} from "../../enums/role.enum";
 
 const defaultRoles = [
     {
-        name: "admin",
+        name: RoleName.Admin,
         description: "Full system access",
     },
     {
-        name: "user",
+        name: RoleName.User,
         description: "Default user with limited access",
     },
 ];

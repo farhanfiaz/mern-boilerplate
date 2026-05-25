@@ -1,7 +1,7 @@
 export interface User {
-    email?: string;
-    password: string;
-    isRemember: boolean;
+  email?: string;
+  password: string;
+  isRemember: boolean;
 }
 
 export type AuthResponse = {
@@ -10,15 +10,21 @@ export type AuthResponse = {
   refreshToken: string;
 };
 
+export type Role = {
+  Id: string;
+  name: string;
+}
+
 export type JWTTokenUserInfo = {
   userId: string;
   email: string;
   name: string;
   userIamge: string;
+  role: Role[];
 }
 
 export interface AuthContextType {
-    user: AuthResponse | null;
-    login: (user: User) => void;
-    logout: () => void;
+  user: AuthResponse | null;
+  login: (user: User) => void;
+  logout: () => void;
 }

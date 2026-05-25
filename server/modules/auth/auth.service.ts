@@ -1,7 +1,7 @@
 import { db } from "@server/db/connection";
 import { AuthResponse, JWTTokenUserInfo, LoginDto, RegisterDto } from "./auth.types";
-import { users } from "@server/db/schema";
-import { eq, and } from "drizzle-orm";
+import { userRoles, users } from "@server/db/schema";
+import { eq, and, isNull } from "drizzle-orm";
 import bcrypt from "bcryptjs";
 import jwt, { Secret, SignOptions } from "jsonwebtoken";
 import appConfig from "@server/config/app.config";
@@ -26,11 +26,28 @@ export class AuthService {
         if (!isPasswordValid) {
             throw new Error("Invalid credentials");
         }
+        const userRoles = await db.query.userRoles.findMany({
+            where: (userRoles, { eq }) => eq(userRoles.userId, userDetail?.id),
+            columns: {
+                userId: false,
+                roleId: false,
+                assignedAt: false,
+            },
+            with: {
+                role: {
+                    columns: {
+                        id: true,
+                        name: true,
+                    },
+                },
+            },
+        });
         const userInfo: JWTTokenUserInfo = {
             userId: userDetail?.id ?? '',
             email: userDetail?.email ?? '',
             name: userDetail.username ?? '',
-            userIamge: userDetail.avatarUrl ?? ''
+            userIamge: userDetail.avatarUrl ?? '',
+            role: userRoles.map((role) => role.role)
         };
         const accessToken = this.generateAccessToken(userInfo);
         const refreshToken = this.generateRefreshToken(userInfo);
@@ -50,11 +67,28 @@ export class AuthService {
                     eq(users.isDeleted, false)
                 ),
         });
+        const userRoles = await db.query.userRoles.findMany({
+            where: (userRoles, { eq }) => eq(userRoles.userId, userDetail?.id ?? ''),
+            columns: {
+                userId: false,
+                roleId: false,
+                assignedAt: false,
+            },
+            with: {
+                role: {
+                    columns: {
+                        id: true,
+                        name: true,
+                    },
+                },
+            },
+        });
         const userInfo: JWTTokenUserInfo = {
             userId: userDetail?.id ?? '',
             email: userDetail?.email ?? '',
             name: userDetail?.username ?? '',
-            userIamge: userDetail?.avatarUrl ?? ''
+            userIamge: userDetail?.avatarUrl ?? '',
+            role: userRoles.map((role) => role.role)
         };
         return userInfo;
     }
@@ -97,11 +131,39 @@ export class AuthService {
                 avatarUrl: data.file?.filename ?? null
             })
             .returning();
+        const defaultRole = await db.query.roles.findFirst({
+            where: (role, { eq }) => (eq(role.name, 'User'))
+        });
+        if (!defaultRole) {
+            throw new Error("Default role not found");
+        }
+        await db.insert(userRoles).values({
+            userId: newUser.id,
+            roleId: defaultRole.id,
+            assignedAt: new Date()
+        });
+        const userRoleList = await db.query.userRoles.findMany({
+            where: (userRoles, { eq }) => eq(userRoles.userId, newUser?.id),
+            columns: {
+                userId: false,
+                roleId: false,
+                assignedAt: false,
+            },
+            with: {
+                role: {
+                    columns: {
+                        id: true,
+                        name: true,
+                    },
+                },
+            },
+        });
         const userInfo: JWTTokenUserInfo = {
             userId: newUser.id,
             email: newUser.email,
             name: newUser.username ?? '',
-            userIamge: newUser.avatarUrl ?? ''
+            userIamge: newUser.avatarUrl ?? '',
+            role: userRoleList.map((role) => role.role)
         };
         const accessToken = this.generateAccessToken(userInfo);
         const refreshToken = this.generateRefreshToken(userInfo);

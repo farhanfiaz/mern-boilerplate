@@ -16,10 +16,14 @@ export type AuthResponse = {
   token: string;
   refreshToken: string;
 };
-
+export type Role = {
+  id: string;
+  name: string;
+};
 export type JWTTokenUserInfo = {
   userId: string;
   email: string;
   name: string;
   userIamge: string;
+  role: Role[];
 }

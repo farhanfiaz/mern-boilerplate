@@ -1,5 +1,6 @@
 import { nanoid } from "nanoid";
 import { pgTable, varchar, text, timestamp, boolean, uniqueIndex } from "drizzle-orm/pg-core";
+import { relations } from "drizzle-orm";
 
 export const users = pgTable("users", {
   id: varchar("id", { length: 21 })
@@ -65,6 +66,10 @@ export const roles = pgTable("roles", {
     .notNull(),
 });
 
+export const rolesRelations = relations(roles, ({ many }) => ({
+  userRoles: many(userRoles),
+}));
+
 export const userRoles = pgTable(
   "user_roles",
   {
@@ -94,3 +99,15 @@ export const userRoles = pgTable(
     ),
   })
 );
+
+export const userRolesRelations = relations(userRoles, ({ one }) => ({
+  role: one(roles, {
+    fields: [userRoles.roleId],
+    references: [roles.id],
+  }),
+
+  user: one(users, {
+    fields: [userRoles.userId],
+    references: [users.id],
+  }),
+}));

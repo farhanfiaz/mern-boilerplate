@@ -1,15 +1,18 @@
 import { useState, FormEvent } from "react";
-import { useNavigate, Link } from "react-router-dom";
+import { useNavigate, Link, Navigate } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
 
 export default function Register() {
+  const navigate = useNavigate();
+  const { login, user } = useAuth();
   const [name, setName] = useState<string>("");
   const [email, setEmail] = useState<string>("");
   const [password, setPassword] = useState<string>("");
   const [isRemember, setIsRememberMe] = useState<boolean>(false);
 
-  const { login } = useAuth();
-  const navigate = useNavigate();
+  if (user) {
+    return <Navigate to="/dashboard" replace />;
+  }
 
   const handleSubmit = (e: FormEvent) => {
     e.preventDefault();

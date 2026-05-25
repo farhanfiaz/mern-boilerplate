@@ -1,11 +1,13 @@
 import { useState, FormEvent } from "react";
 import { useNavigate, Link, Navigate } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
+import { RegisterUser } from "@/types/auth.types";
 
 export default function Register() {
   const navigate = useNavigate();
-  const { login, user } = useAuth();
-  const [name, setName] = useState<string>("");
+  const { register, user } = useAuth();
+  const [firstName, setFirstName] = useState<string>("");
+  const [lastName, setLastName] = useState<string>("");
   const [email, setEmail] = useState<string>("");
   const [password, setPassword] = useState<string>("");
   const [isRemember, setIsRememberMe] = useState<boolean>(false);
@@ -16,9 +18,14 @@ export default function Register() {
 
   const handleSubmit = (e: FormEvent) => {
     e.preventDefault();
-
-    login({ password, email, isRemember });
-    navigate("/");
+    const registerUser: RegisterUser = {
+      firstName: firstName,
+      lastName: lastName,
+      userName: email,
+      email: email,
+      password: password
+    };
+    register(registerUser);
   };
 
   return (
@@ -27,9 +34,16 @@ export default function Register() {
         <h2>Register</h2>
 
         <input
-          placeholder="Name"
-          value={name}
-          onChange={(e) => setName(e.target.value)}
+          placeholder="first name"
+          value={firstName}
+          onChange={(e) => setFirstName(e.target.value)}
+          style={styles.input}
+        />
+
+        <input
+          placeholder="last name"
+          value={lastName}
+          onChange={(e) => setLastName(e.target.value)}
           style={styles.input}
         />
 

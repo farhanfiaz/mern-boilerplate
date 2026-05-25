@@ -1,6 +1,6 @@
 import { createContext, useContext, useEffect, useState, ReactNode } from "react";
-import { AuthContextType, AuthResponse, User } from "../types/auth.types";
-import { authLogin } from "@/services/user.service";
+import { AuthContextType, AuthResponse, RegisterUser, User } from "../types/auth.types";
+import { authLogin, authRegister } from "@/services/user.service";
 import logger from "@/utils/logger";
 import { showError } from "@/utils/toast";
 import { ENDPOINTS } from "@/api/endpoints";
@@ -35,8 +35,20 @@ export const AuthProvider = ({ children }: Props) => {
     localStorage.removeItem(ENDPOINTS.SYSTEM.LOCALSTORAGEKEY);
   };
 
+  const register = (userData: RegisterUser) => {
+    authRegister(userData)
+      .then((resp: AuthResponse) => {
+        setUser(resp);
+        localStorage.setItem(ENDPOINTS.SYSTEM.LOCALSTORAGEKEY, JSON.stringify(resp));
+      })
+      .catch((err) => {
+        showError(err.message);
+        logger.error(err);
+      });
+  }
+
   return (
-    <AuthContext.Provider value={{ user, login, logout }}>
+    <AuthContext.Provider value={{ user, login, logout, register }}>
       {children}
     </AuthContext.Provider>
   );

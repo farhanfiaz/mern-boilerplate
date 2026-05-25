@@ -7,13 +7,17 @@ export default function MultipleRole() {
     if (!user) return <Redirect to="/login" />;
 
     if (user.user.role.length <= 1) {
+        const defaultRole = user.user.role.at(0)?.Id;
         return <Redirect to="/dashboard" />;
     }
 
     return (
         <ul>
             {user.user.role.map((role) => (
-                <li key={role.Id}>
+                <li key={role.Id} onClick={(e) => {
+                    e.preventDefault();
+                    const selectedRole = e.currentTarget.value;
+                }}>
                     {role.name}
                 </li>
             ))}

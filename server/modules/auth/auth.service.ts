@@ -132,7 +132,7 @@ export class AuthService {
             })
             .returning();
         const defaultRole = await db.query.roles.findFirst({
-            where: (role, { eq }) => (eq(role.name, 'User'))
+            where: (role, { eq }) => (eq(role.name, 'user'))
         });
         if (!defaultRole) {
             throw new Error("Default role not found");

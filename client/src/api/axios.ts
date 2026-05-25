@@ -16,7 +16,8 @@ axiosInstance.interceptors.request.use(
     const apiKey = import.meta.env.VITE_API_KEYS;
     const raw = localStorage.getItem(ENDPOINTS.SYSTEM.LOCALSTORAGEKEY);
 
-    const token = raw ? JSON.parse(raw).token : null; if (token) {
+    const token = raw ? JSON.parse(raw).token : null;
+    if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     }
     if (apiKey) {
@@ -38,7 +39,7 @@ axiosInstance.interceptors.response.use(
       const status = error.response.status;
 
       if (status === 401) {
-        localStorage.removeItem("accessToken");
+        localStorage.removeItem(ENDPOINTS.SYSTEM.LOCALSTORAGEKEY);
 
         window.location.href = "/login";
       }

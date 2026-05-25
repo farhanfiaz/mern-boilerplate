@@ -1,6 +1,8 @@
 import logger from "@/utils/logger";
 import axios from "axios";
 import { ENDPOINTS } from "./endpoints";
+import { getSessionKey } from "@/crypto/session";
+import { decrypt, encrypt } from "@/crypto/aes";
 
 const axiosInstance = axios.create({
   baseURL: import.meta.env.VITE_API_URL,
@@ -12,7 +14,7 @@ const axiosInstance = axios.create({
 });
 
 axiosInstance.interceptors.request.use(
-  (config) => {
+  async (config) => {
     const apiKey = import.meta.env.VITE_API_KEYS;
     const raw = localStorage.getItem(ENDPOINTS.SYSTEM.LOCALSTORAGEKEY);
 
@@ -24,13 +26,27 @@ axiosInstance.interceptors.request.use(
       config.headers['x-api-key'] = apiKey;
     }
 
+    const key = getSessionKey();
+
+    if (config.data) {
+      const encrypted = await encrypt(key, config.data);
+
+      config.data = encrypted; // replace payload
+    }
+
     return config;
   },
   (error) => Promise.reject(error)
 );
 
 axiosInstance.interceptors.response.use(
-  (response) => {
+  async (response) => {
+    const key = getSessionKey();
+
+    if (response.data?.data && response.data?.iv) {
+      const decrypted = await decrypt(key, response.data);
+      response.data = decrypted;
+    }
     return response.data;
   },
 

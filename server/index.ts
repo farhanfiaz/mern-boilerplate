@@ -66,11 +66,14 @@ app.get(
 
 app.use(
   "/api",
+  authMiddleware.decryptRequest,
   authMiddleware.apiLimiter,
+  authMiddleware.encryptResponse,
   authMiddleware.apiKeyMiddleware,
   router
 );
 
+ //app.use(authMiddleware.encryptResponse);
 // ---------------- ERROR HANDLER ----------------
 app.use(authMiddleware.errorMiddleware);
 

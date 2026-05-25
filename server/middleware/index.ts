@@ -6,6 +6,8 @@ import { upload } from "./multer";
 import { securityHeaders } from "./header.middleware";
 import { apiLimiter, authLimiter, passwordResetLimiter } from "./rateLimit.middleware";
 import { corsOptions } from "./cors-options.middleware";
+import { decryptRequest } from "./decryptRequest";
+import { encryptResponse } from "./encryptResponse";
 
 
 export const authMiddleware = {
@@ -19,5 +21,7 @@ export const authMiddleware = {
   authLimiter,
   passwordResetLimiter,
   apiLimiter,
-  corsOptions
+  corsOptions,
+  decryptRequest,
+  encryptResponse
 };

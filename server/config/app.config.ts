@@ -23,6 +23,7 @@ const config = {
   frontend: {
     url: process.env.VITE_FRONTEND_URL,
   },
+  SESSION_KEY:process.env.VITE_SESSION_KEY!
 };
 
 export default config;

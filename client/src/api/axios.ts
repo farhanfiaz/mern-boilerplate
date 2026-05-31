@@ -43,31 +43,21 @@ axiosInstance.interceptors.response.use(
   async (response) => {
     const key = getSessionKey();
 
-    if (response.data?.data && response.data?.iv) {
-      const decrypted = await decrypt(key, response.data);
-      response.data = decrypted;
+    if (response.data?.iv && response.data?.data) {
+      response.data = await decrypt(key, response.data);
     }
-    return response.data;
+
+    return response;
   },
 
   async (error) => {
-    if (error.response) {
-      const status = error.response.status;
+    const key = getSessionKey();
 
-      if (status === 401) {
-        localStorage.removeItem(ENDPOINTS.SYSTEM.LOCALSTORAGEKEY);
-
-        window.location.href = "/login";
-      }
-
-      return Promise.reject(error.response.data);
+    if (error.response?.data?.iv && error.response?.data?.data) {
+      error.response.data = await decrypt(key, error.response.data);
     }
-    logger.error(error.message);
-    return Promise.reject({
-      success: false,
-      message: error.message || "Network Error",
-      details: error
-    });
+
+    return Promise.reject(error.response?.data || error);
   }
 );
 

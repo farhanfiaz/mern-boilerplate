@@ -2,8 +2,8 @@ import { createContext, useContext, useEffect, useState, ReactNode } from "react
 import { AuthContextType, AuthResponse, RegisterUser, User } from "../types/auth.types";
 import { authLogin, authRegister } from "@/services/user.service";
 import logger from "@/utils/logger";
-import { showError } from "@/utils/toast";
 import { ENDPOINTS } from "@/api/endpoints";
+import { useToast } from "@/hooks/use-toast";
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
@@ -13,6 +13,7 @@ interface Props {
 
 export const AuthProvider = ({ children }: Props) => {
   const [user, setUser] = useState<AuthResponse | null>(null);
+  const { toast } = useToast();
 
   useEffect(() => {
     const stored = localStorage.getItem(ENDPOINTS.SYSTEM.LOCALSTORAGEKEY);
@@ -24,7 +25,11 @@ export const AuthProvider = ({ children }: Props) => {
       setUser(resp);
       localStorage.setItem(ENDPOINTS.SYSTEM.LOCALSTORAGEKEY, JSON.stringify(resp));
     }).catch((err) => {
-      showError(err.message);
+      toast({
+        title: "Invalid credentials",
+        description: err.message,
+        variant: "destructive"
+      });
       logger.error(err);
       throw err;
     });
@@ -42,7 +47,11 @@ export const AuthProvider = ({ children }: Props) => {
         localStorage.setItem(ENDPOINTS.SYSTEM.LOCALSTORAGEKEY, JSON.stringify(resp));
       })
       .catch((err) => {
-        showError(err.message);
+        toast({
+          title: "Invalid credentials",
+          description: err.message,
+          variant: "destructive"
+        });
         logger.error(err);
       });
   }

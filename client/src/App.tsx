@@ -4,7 +4,7 @@ import { QueryProvider } from './providers/query-provider'
 import { AuthProvider } from './context/AuthContext'
 import { BrowserRouter } from 'react-router-dom'
 import AppRoutes from './routes/AppRoutes'
-import { ToastContainer } from 'react-toastify'
+import { Toaster } from './components/ui/toaster'
 
 function App() {
 
@@ -13,19 +13,8 @@ function App() {
       <QueryProvider>
         <AuthProvider>
           <BrowserRouter>
+            <Toaster />
             <AppRoutes />
-
-            {/* ✅ GLOBAL TOAST CONTAINER */}
-            <ToastContainer
-              position="top-right"
-              autoClose={3000}
-              hideProgressBar={false}
-              newestOnTop
-              closeOnClick
-              pauseOnHover
-              draggable
-              theme="light"
-            />
           </BrowserRouter>
         </AuthProvider>
       </QueryProvider>

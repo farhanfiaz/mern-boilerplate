@@ -39,6 +39,7 @@ export class AuthService {
                     columns: {
                         id: true,
                         name: true,
+                        isSystem: true,
                     },
                 },
             },
@@ -48,7 +49,8 @@ export class AuthService {
             email: userDetail?.email ?? '',
             name: userDetail.username ?? '',
             userIamge: userDetail.avatarUrl ?? '',
-            role: userRoles.map((role) => role.role)
+            role: userRoles.map((role) => role.role),
+            tenantId: userDetail.tenantId ?? '',
         };
         const accessToken = this.generateAccessToken(userInfo);
         const refreshToken = this.generateRefreshToken(userInfo);
@@ -80,6 +82,7 @@ export class AuthService {
                     columns: {
                         id: true,
                         name: true,
+                        isSystem: true,
                     },
                 },
             },
@@ -89,7 +92,8 @@ export class AuthService {
             email: userDetail?.email ?? '',
             name: userDetail?.username ?? '',
             userIamge: userDetail?.avatarUrl ?? '',
-            role: userRoles.map((role) => role.role)
+            role: userRoles.map((role) => role.role),
+            tenantId: userDetail?.tenantId ?? '',
         };
         return userInfo;
     }
@@ -110,6 +114,20 @@ export class AuthService {
                 expiresIn: appConfig.security.refreshExpiresIn,
             } as SignOptions
         );
+    }
+    async refreshToken(refreshToken: string): Promise<AuthResponse> {
+        const decoded = jwt.verify(
+            refreshToken,
+            appConfig.security.refreshSecret as Secret
+        ) as JWTTokenUserInfo;
+        const userInfo = await this.userInfoByUserId(decoded.userId);
+        const accessToken = this.generateAccessToken(userInfo);
+        const newRefreshToken = this.generateRefreshToken(userInfo);
+        return {
+            user: userInfo,
+            token: accessToken,
+            refreshToken: newRefreshToken,
+        };
     }
     async register(data: RegisterDto): Promise<AuthResponse> {
         const isEmailExist = await db.query.users.findFirst(
@@ -155,6 +173,7 @@ export class AuthService {
                     columns: {
                         id: true,
                         name: true,
+                        isSystem: true,
                     },
                 },
             },
@@ -164,7 +183,8 @@ export class AuthService {
             email: newUser.email,
             name: newUser.username ?? '',
             userIamge: newUser.avatarUrl ?? '',
-            role: userRoleList.map((role) => role.role)
+            role: userRoleList.map((role) => role.role),
+            tenantId: newUser.tenantId ?? '',
         };
         const accessToken = this.generateAccessToken(userInfo);
         const refreshToken = this.generateRefreshToken(userInfo);
@@ -174,5 +194,155 @@ export class AuthService {
             token: accessToken,
             refreshToken: refreshToken,
         };
+    }
+    async getSuperAdminMenus(userId: string, selectedRole: string) {
+        const userDetail = await db.query.users.findFirst({
+            where: (users, { eq, isNull }) =>
+                and(
+                    eq(users.id, userId),
+                    eq(users.isActive, true),
+                    eq(users.isDeleted, false)
+                ),
+        });
+        if (!userDetail) {
+            throw new Error("User not found");
+        }
+        const userRoles = await db.query.userRoles.findMany({
+            where: (userRoles, { eq }) => (eq(userRoles.userId, userDetail?.id ?? '')),
+            columns: {
+                userId: false,
+                roleId: false,
+                assignedAt: false,
+            },
+            with: {
+                role: {
+                    columns: {
+                        id: true,
+                        name: true,
+                        isSystem: true,
+                    },
+                },
+            },
+        });
+        if (userRoles.some((role) => role.role.isSystem)) {
+            return [
+                {
+                    id: 1,
+                    name: "Dashboard",
+                    parentId: null,
+                    groupLabel: "Main",
+                    icon: "LayoutDashboard",
+                    url: "/dashboard",
+                    order: 1,
+                    createdAt: new Date(),
+                    isActive: true,
+                    isAction: false,
+                },
+                {
+                    id: 2,
+                    name: "Users",
+                    parentId: null,
+                    groupLabel: "Management",
+                    icon: "Users",
+                    url: "/users",
+                    order: 2,
+                    createdAt: new Date(),
+                    isActive: true,
+                    isAction: false,
+                },
+                {
+                    id: 3,
+                    name: "User List",
+                    parentId: 2,
+                    groupLabel: "Management",
+                    icon: "List",
+                    url: "/users/list",
+                    order: 1,
+                    createdAt: new Date(),
+                    isActive: true,
+                    isAction: false,
+                },
+                {
+                    id: 4,
+                    name: "Create User",
+                    parentId: 2,
+                    groupLabel: "Management",
+                    icon: "UserPlus",
+                    url: "/users/create",
+                    order: 2,
+                    createdAt: new Date(),
+                    isActive: true,
+                    isAction: true,
+                },
+                {
+                    id: 5,
+                    name: "Roles",
+                    parentId: null,
+                    groupLabel: "Management",
+                    icon: "Shield",
+                    url: "/roles",
+                    order: 3,
+                    createdAt: new Date(),
+                    isActive: true,
+                    isAction: false,
+                },
+                {
+                    id: 6,
+                    name: "Settings",
+                    parentId: null,
+                    groupLabel: "System",
+                    icon: "Settings",
+                    url: "/settings",
+                    order: 4,
+                    createdAt: new Date(),
+                    isActive: true,
+                    isAction: false,
+                },
+                {
+                    id: 7,
+                    name: "Profile",
+                    parentId: 6,
+                    groupLabel: "System",
+                    icon: "User",
+                    url: "/settings/profile",
+                    order: 1,
+                    createdAt: new Date(),
+                    isActive: true,
+                    isAction: false,
+                },
+                {
+                    id: 8,
+                    name: "Permissions",
+                    parentId: 5,
+                    groupLabel: "Management",
+                    icon: "Key",
+                    url: "/roles/permissions",
+                    order: 1,
+                    createdAt: new Date(),
+                    isActive: true,
+                    isAction: true,
+                },
+            ];
+        }
+        const userRolesList = await db.query.userRoles.findMany({
+            where: (userRoles, { eq }) => (eq(userRoles.userId, userDetail?.id ?? ''), eq(userRoles.roleId, selectedRole)),
+            columns: {
+                userId: false,
+                roleId: false,
+                assignedAt: false,
+            },
+            with: {
+                role: {
+                    columns: {
+                        id: true,
+                        name: true,
+                        isSystem: true,
+                    },
+                },
+            },
+        });
+        if (!userRolesList) {
+            return [];
+        }
     }
 }

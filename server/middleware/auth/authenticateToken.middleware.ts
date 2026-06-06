@@ -37,16 +37,14 @@ export const authenticateToken = async (req: Request, res: Response, next: NextF
             return sendResponse(res, HttpStatusCode.UNAUTHORIZED, false, "User not found");
         }
 
-        // const companyId = req.headers["company-id"];
-        // if (!companyId) {
-        //     return res.status(401).json({
-        //         status: 401,
-        //         message: "Company-ID header is missing",
-        //         data: null,
-        //     });
-        // }
+        const isSystemAdmin = user.role.some(r => r.isSystem);
+        const tenantId = req.headers["tenant-id"];
 
-        // const parsedCompanyId = parseInt(companyId as string, 10);
+        if (!tenantId && !isSystemAdmin) {
+            return sendResponse(res, HttpStatusCode.UNAUTHORIZED, false, "Tenant-ID header is missing");
+        }
+
+        const parsedTenantId = isSystemAdmin ? 0 : parseInt(tenantId as string, 10);
         // const isCompanyDeleted = await systemConfigService.isCompanyDeleted(parsedCompanyId);
         // if (isCompanyDeleted) {
         //     return res.status(401).json({
@@ -82,7 +80,7 @@ export const authenticateToken = async (req: Request, res: Response, next: NextF
         // }
         // console.log("----------userCompanies-------------", companyId);
 
-        req.user = { ...user };
+        req.user = { ...user, isSystemAdmin: isSystemAdmin, tenantId: parsedTenantId };
         next();
     } catch (error) {
         logger.error("JWT verification error:", error);

@@ -2,6 +2,72 @@ import { nanoid } from "nanoid";
 import { pgTable, varchar, text, timestamp, boolean, uniqueIndex } from "drizzle-orm/pg-core";
 import { relations } from "drizzle-orm";
 
+export const tenants = pgTable("tenants", {
+  id: varchar("id", { length: 21 })
+    .$defaultFn(() => nanoid())
+    .primaryKey(),
+
+  name: varchar("name", { length: 50 }).notNull().unique(),
+  slug: varchar("slug", { length: 50 }).notNull().unique(),
+  description: text("description"),
+  website: varchar("website", { length: 100 }),
+  logo: text("logo"),
+  createdAt: timestamp("created_at", {
+    withTimezone: true,
+    mode: "date",
+  })
+    .defaultNow()
+    .notNull(),
+  updatedAt: timestamp("updated_at", {
+    withTimezone: true,
+    mode: "date",
+  })
+    .defaultNow()
+    .notNull(),
+});
+
+export const subscriptions = pgTable("subscriptions", {
+  id: varchar("id", { length: 21 })
+    .$defaultFn(() => nanoid())
+    .primaryKey(),
+
+  tenantId: varchar("tenant_id", { length: 21 })
+    .notNull()
+    .references(() => tenants.id, { onDelete: "cascade" }),
+  plan: varchar("plan", { length: 50 }).notNull(),
+  status: varchar("status", { length: 50 }).notNull(),
+  currentPeriodStart: timestamp("current_period_start", {
+    withTimezone: true,
+    mode: "date",
+  })
+    .defaultNow()
+    .notNull(),
+  currentPeriodEnd: timestamp("current_period_end", {
+    withTimezone: true,
+    mode: "date",
+  })
+    .defaultNow()
+    .notNull(),
+  renewsAt: timestamp("renews_at", {
+    withTimezone: true,
+    mode: "date",
+  })
+    .defaultNow()
+    .notNull(),
+  createdAt: timestamp("created_at", {
+    withTimezone: true,
+    mode: "date",
+  })
+    .defaultNow()
+    .notNull(),
+  updatedAt: timestamp("updated_at", {
+    withTimezone: true,
+    mode: "date",
+  })
+    .defaultNow()
+    .notNull(),
+});
+
 export const users = pgTable("users", {
   id: varchar("id", { length: 21 })
     .$defaultFn(() => nanoid())
@@ -46,6 +112,9 @@ export const users = pgTable("users", {
   })
     .defaultNow()
     .notNull(),
+
+  tenantId: varchar("tenant_id", { length: 21 })
+    .references(() => tenants.id, { onDelete: "cascade" }),
 });
 
 export const roles = pgTable("roles", {
@@ -53,8 +122,11 @@ export const roles = pgTable("roles", {
     .$defaultFn(() => nanoid())
     .primaryKey(),
 
-  name: varchar("name", { length: 50 }).notNull().unique(),
+  name: varchar("name", { length: 50 }).notNull(),
   // e.g. "admin", "user", "moderator"
+  isSystem: boolean("is_system")
+    .default(false)
+    .notNull(),
 
   description: text("description"),
 
@@ -64,11 +136,16 @@ export const roles = pgTable("roles", {
   })
     .defaultNow()
     .notNull(),
-});
 
-export const rolesRelations = relations(roles, ({ many }) => ({
-  userRoles: many(userRoles),
-}));
+  tenantId: varchar("tenant_id", { length: 21 })
+    .references(() => tenants.id, { onDelete: "cascade" }),
+},
+  (table) => ({
+    uniqueRolePerTenant: uniqueIndex("unique_role_per_tenant").on(
+      table.tenantId,
+      table.name
+    ),
+  }));
 
 export const userRoles = pgTable(
   "user_roles",
@@ -99,6 +176,43 @@ export const userRoles = pgTable(
     ),
   })
 );
+
+export const tenantsRelations = relations(tenants, ({ many }) => ({
+  users: many(users),
+  roles: many(roles),
+  subscriptions: many(subscriptions),
+}));
+
+export const subscriptionsRelations = relations(
+  subscriptions,
+  ({ one }) => ({
+    tenant: one(tenants, {
+      fields: [subscriptions.tenantId],
+      references: [tenants.id],
+    }),
+  })
+);
+
+export const rolesRelations = relations(
+  roles,
+  ({ one, many }) => ({
+    tenant: one(tenants, {
+      fields: [roles.tenantId],
+      references: [tenants.id],
+    }),
+
+    userRoles: many(userRoles),
+  })
+);
+
+export const usersRelations = relations(users, ({ one, many }) => ({
+  tenant: one(tenants, {
+    fields: [users.tenantId],
+    references: [tenants.id],
+  }),
+
+  userRoles: many(userRoles),
+}));
 
 export const userRolesRelations = relations(userRoles, ({ one }) => ({
   role: one(roles, {

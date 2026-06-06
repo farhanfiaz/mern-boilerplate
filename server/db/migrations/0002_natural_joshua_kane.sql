@@ -1,0 +1,1 @@
+ALTER TABLE "subscriptions" ADD COLUMN "renews_at" timestamp with time zone DEFAULT now() NOT NULL;

@@ -13,4 +13,7 @@ export const ENDPOINTS = {
     PROFILE: `${PREFIX}/auth/profile`,
     REFRESH: `${PREFIX}/auth/refresh-token`,
   },
+  SIDEBAR: {
+    GET_USER_MENUS: `${PREFIX}/auth/get-user-menus`
+  }
 } as const;

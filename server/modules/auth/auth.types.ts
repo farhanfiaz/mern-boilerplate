@@ -19,6 +19,7 @@ export type AuthResponse = {
 export type Role = {
   id: string;
   name: string;
+  isSystem: boolean;
 };
 export type JWTTokenUserInfo = {
   userId: string;
@@ -26,4 +27,5 @@ export type JWTTokenUserInfo = {
   name: string;
   userIamge: string;
   role: Role[];
+  tenantId: string;
 }

@@ -32,4 +32,22 @@ export class AuthController {
         });
         return sendResponse(res as Response, HttpStatusCode.OK, true, "User register successful", user);
     }
+
+    refreshToken = async (req: Request, res: Response) => {
+        const { refreshToken } = req.body;
+        if (!refreshToken) {
+            return sendResponse(res as Response, HttpStatusCode.BAD_REQUEST, false, "Refresh token is required");
+        }
+        const data = await this.authService.refreshToken(refreshToken);
+        if (!data) {
+            return sendResponse(res as Response, HttpStatusCode.UNAUTHORIZED, false, "Invalid refresh token");
+        }
+        return sendResponse(res as Response, HttpStatusCode.OK, true, "Refresh token successful", data);
+    }
+
+    getSuperAdminMenus = async (req: Request, res: Response) => {
+        const { userId, roleId } = req.query;
+        const userMenus = await this.authService.getSuperAdminMenus(userId as string, roleId as string);
+        return sendResponse(res as Response, HttpStatusCode.OK, true, "User menus", userMenus);
+    }
 }

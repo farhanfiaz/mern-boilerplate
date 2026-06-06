@@ -29,7 +29,7 @@ export const createRateLimit = ({
 };
 
 export const authLimiter = createRateLimit({
-    max: 5,
+    max: 15,
     message: 'Too many login attempts. Please try again later.',
 });
 

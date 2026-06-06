@@ -1,3 +1,122 @@
 @import "tailwindcss";
-@plugin "@tailwindcss/typography";
-@plugin "tailwindcss-animate";
+
+/* =========================
+   THEME TOKENS (Tailwind v4 way)
+========================= */
+@theme {
+  --color-background: hsl(0 0% 100%);
+  --color-foreground: hsl(20 14.3% 4.1%);
+  --color-border: hsl(20 5.9% 90%);
+  --color-primary: hsl(207 90% 54%);
+}
+
+/* Dark mode */
+.dark {
+  --color-background: hsl(240 10% 3.9%);
+  --color-foreground: hsl(0 0% 98%);
+  --color-border: hsl(240 3.7% 15.9%);
+}
+
+/* =========================
+   BASE
+========================= */
+@layer base {
+  * {
+    border-color: var(--color-border);
+  }
+
+  body {
+    background: var(--color-background);
+    color: var(--color-foreground);
+    font-family: Inter, system-ui, sans-serif;
+    @apply antialiased;
+  }
+}
+
+/* =========================
+   COMPONENTS
+========================= */
+@layer components {
+  .nav-item {
+    @apply transition-all duration-200 ease-in-out;
+  }
+
+  .nav-item.active {
+    @apply bg-sky-100 text-blue-600 font-semibold;
+  }
+
+  .nav-item:hover {
+    @apply bg-slate-100;
+  }
+
+  .status-badge {
+    @apply inline-flex items-center px-2 py-1 text-xs font-medium rounded-full;
+  }
+
+  .status-active { @apply bg-green-500 text-white; }
+  .status-inactive { @apply bg-red-500 text-white; }
+  .status-pending { @apply bg-yellow-100 text-yellow-800; }
+}
+
+/* =========================
+   UTILITIES
+========================= */
+@layer utilities {
+  .scrollbar-custom {
+    scrollbar-width: thin;
+    scrollbar-color: #6C3EFF #F5F5F5;
+  }
+
+  .scrollbar-custom::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+
+  .scrollbar-custom::-webkit-scrollbar-thumb {
+    background: linear-gradient(90deg, #6C3EFF, #00C3B9);
+    border-radius: 999px;
+  }
+}
+
+/* =========================
+   ANIMATIONS
+========================= */
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.animate-fadeIn {
+  animation: fadeIn 0.5s ease-out both;
+}
+
+@keyframes float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-6px); }
+}
+
+.animate-float {
+  animation: float 3s ease-in-out infinite;
+}
+
+/* =========================
+   OVERLAY
+========================= */
+.certificate-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0,0,0,0.5);
+  backdrop-filter: blur(4px);
+}
+
+.certificate-dialog {
+  background: white;
+  border-radius: 12px;
+  padding: 24px;
+  max-width: 400px;
+  width: 90%;
+}

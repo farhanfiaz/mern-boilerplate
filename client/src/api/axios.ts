@@ -26,6 +26,11 @@ axiosInstance.interceptors.request.use(
       config.headers['x-api-key'] = apiKey;
     }
 
+    const tenantId = raw ? JSON.parse(raw).tenantId : null;
+    if (tenantId) {
+      config.headers['tenant-id'] = tenantId;
+    }
+
     const key = getSessionKey();
 
     if (config.data) {
@@ -47,7 +52,7 @@ axiosInstance.interceptors.response.use(
       response.data = await decrypt(key, response.data);
     }
 
-    return response;
+    return response.data;
   },
 
   async (error) => {

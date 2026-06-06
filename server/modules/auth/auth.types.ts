@@ -28,4 +28,6 @@ export type JWTTokenUserInfo = {
   userIamge: string;
   role: Role[];
   tenantId: string;
+  firstName: string;
+  lastName: string;
 }

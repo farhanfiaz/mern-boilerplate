@@ -17,7 +17,7 @@ export const authenticateToken = async (req: Request, res: Response, next: NextF
     try {
         const decoded = jwt.verify(token, appConfig.security.jwtSecret as Secret) as any;
         // Ensure we have a valid userId
-        if (!decoded.userId || typeof decoded.userId !== "number") {
+        if (!decoded.userId || typeof decoded.userId !== "string") {
             return sendResponse(res, HttpStatusCode.UNAUTHORIZED, false, "Invalid token format");
         }
 
@@ -26,7 +26,7 @@ export const authenticateToken = async (req: Request, res: Response, next: NextF
             return sendResponse(res, HttpStatusCode.UNAUTHORIZED, false, "User-ID header is missing");
         }
 
-        if (parseInt(headerUserId as string, 10) !== decoded.userId) {
+        if (headerUserId !== decoded.userId) {
             logger.log(
                 `token user Id: ${decoded.userId} | header user id: ${headerUserId} `
             );
@@ -44,7 +44,7 @@ export const authenticateToken = async (req: Request, res: Response, next: NextF
             return sendResponse(res, HttpStatusCode.UNAUTHORIZED, false, "Tenant-ID header is missing");
         }
 
-        const parsedTenantId = isSystemAdmin ? 0 : parseInt(tenantId as string, 10);
+        const parsedTenantId = isSystemAdmin ? "" : (tenantId as string);
         // const isCompanyDeleted = await systemConfigService.isCompanyDeleted(parsedCompanyId);
         // if (isCompanyDeleted) {
         //     return res.status(401).json({

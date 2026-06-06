@@ -51,6 +51,8 @@ export class AuthService {
             userIamge: userDetail.avatarUrl ?? '',
             role: userRoles.map((role) => role.role),
             tenantId: userDetail.tenantId ?? '',
+            firstName: userDetail.firstName ?? '',
+            lastName: userDetail.lastName ?? '',
         };
         const accessToken = this.generateAccessToken(userInfo);
         const refreshToken = this.generateRefreshToken(userInfo);
@@ -94,6 +96,8 @@ export class AuthService {
             userIamge: userDetail?.avatarUrl ?? '',
             role: userRoles.map((role) => role.role),
             tenantId: userDetail?.tenantId ?? '',
+            firstName: userDetail?.firstName ?? '',
+            lastName: userDetail?.lastName ?? '',
         };
         return userInfo;
     }
@@ -185,6 +189,8 @@ export class AuthService {
             userIamge: newUser.avatarUrl ?? '',
             role: userRoleList.map((role) => role.role),
             tenantId: newUser.tenantId ?? '',
+            firstName: newUser.firstName ?? '',
+            lastName: newUser.lastName ?? '',
         };
         const accessToken = this.generateAccessToken(userInfo);
         const refreshToken = this.generateRefreshToken(userInfo);
@@ -237,91 +243,7 @@ export class AuthService {
                     createdAt: new Date(),
                     isActive: true,
                     isAction: false,
-                },
-                {
-                    id: 2,
-                    name: "Users",
-                    parentId: null,
-                    groupLabel: "Management",
-                    icon: "Users",
-                    url: "/users",
-                    order: 2,
-                    createdAt: new Date(),
-                    isActive: true,
-                    isAction: false,
-                },
-                {
-                    id: 3,
-                    name: "User List",
-                    parentId: 2,
-                    groupLabel: "Management",
-                    icon: "List",
-                    url: "/users/list",
-                    order: 1,
-                    createdAt: new Date(),
-                    isActive: true,
-                    isAction: false,
-                },
-                {
-                    id: 4,
-                    name: "Create User",
-                    parentId: 2,
-                    groupLabel: "Management",
-                    icon: "UserPlus",
-                    url: "/users/create",
-                    order: 2,
-                    createdAt: new Date(),
-                    isActive: true,
-                    isAction: true,
-                },
-                {
-                    id: 5,
-                    name: "Roles",
-                    parentId: null,
-                    groupLabel: "Management",
-                    icon: "Shield",
-                    url: "/roles",
-                    order: 3,
-                    createdAt: new Date(),
-                    isActive: true,
-                    isAction: false,
-                },
-                {
-                    id: 6,
-                    name: "Settings",
-                    parentId: null,
-                    groupLabel: "System",
-                    icon: "Settings",
-                    url: "/settings",
-                    order: 4,
-                    createdAt: new Date(),
-                    isActive: true,
-                    isAction: false,
-                },
-                {
-                    id: 7,
-                    name: "Profile",
-                    parentId: 6,
-                    groupLabel: "System",
-                    icon: "User",
-                    url: "/settings/profile",
-                    order: 1,
-                    createdAt: new Date(),
-                    isActive: true,
-                    isAction: false,
-                },
-                {
-                    id: 8,
-                    name: "Permissions",
-                    parentId: 5,
-                    groupLabel: "Management",
-                    icon: "Key",
-                    url: "/roles/permissions",
-                    order: 1,
-                    createdAt: new Date(),
-                    isActive: true,
-                    isAction: true,
-                },
+                }
             ];
         }
         const userRolesList = await db.query.userRoles.findMany({

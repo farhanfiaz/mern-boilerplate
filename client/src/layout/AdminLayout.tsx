@@ -1,6 +1,7 @@
 import { cn } from "@/utils/utils";
 import { DesktopSidebarProvider, useDesktopSidebarOptional } from "./desktop-sidebar-context";
 import { Sidebar } from "./Sidebar";
+import { Header } from "./Header";
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
   return (
@@ -21,6 +22,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
             collapsed ? "lg:ml-20" : "lg:ml-64"
           )}
         >
+          <Header />
           {children}
         </div>
       </div>

@@ -8,6 +8,9 @@ const key = Buffer.from(config.SESSION_KEY!, "base64");
 
 export function decryptRequest(req: any, res: any, next: any) {
   try {
+    if (req.method === "GET" || !req.body || !req.body.iv || !req.body.data) {
+      return next();
+    }
     const { iv, data } = req.body;
 
     const raw = Buffer.from(data, "base64");

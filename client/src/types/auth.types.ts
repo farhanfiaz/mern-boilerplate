@@ -17,7 +17,7 @@ export type AuthResponse = {
 };
 
 export type Role = {
-  Id: string;
+  id: string;
   name: string;
 }
 
@@ -27,6 +27,8 @@ export type JWTTokenUserInfo = {
   name: string;
   userIamge: string;
   role: Role[];
+  firstName: string;
+  lastName: string;
 }
 
 export interface AuthContextType {

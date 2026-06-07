@@ -56,8 +56,23 @@ export const AuthProvider = ({ children }: Props) => {
       });
   }
 
+  const updateTenant = (tenantId: string) => {
+    setUser((prev) => {
+      if (!prev) return null;
+      const updated = {
+        ...prev,
+        user: {
+          ...prev.user,
+          tenantId,
+        },
+      };
+      localStorage.setItem(ENDPOINTS.SYSTEM.LOCALSTORAGEKEY, JSON.stringify(updated));
+      return updated;
+    });
+  };
+
   return (
-    <AuthContext.Provider value={{ user, login, logout, register }}>
+    <AuthContext.Provider value={{ user, login, logout, register, updateTenant }}>
       {children}
     </AuthContext.Provider>
   );

@@ -37,4 +37,5 @@ export interface AuthContextType {
   login: (user: User) => void;
   logout: () => void;
   register: (user: RegisterUser) => void;
+  updateTenant: (tenantId: string) => void;
 }

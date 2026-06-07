@@ -6,12 +6,14 @@ import { userSeed } from "./users/users.seed";
 import { seedTenants } from "./tenants/tenants.seed";
 import { seedSuperAdminRoles } from "./roles/superAdminRole.seed";
 import { seedSubscriptions } from "./tenants/subcription.seed";
+import { seedMenus } from "./menus/menus.seed";
 
 async function seed() {
     try {
         logger.info("🌱 Seeding database...");
         await seedSuperAdminRoles();
         await superAdminSeed();
+        await seedMenus();
 
         await seedTenants();
         await seedSubscriptions();

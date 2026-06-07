@@ -7,6 +7,10 @@ import ProtectedRoute from "./ProtectedRoute";
 import AdminLayout from "../layout/AdminLayout";
 import { useAuth } from "@/context/AuthContext";
 import MultipleRole from "@/pages/auth/MultipleRole";
+import Tenant from "@/pages/tenant/Tenant";
+import Roles from "@/pages/permission/Roles";
+import UserRoleAccess from "@/pages/permission/UserRoleAccess";
+import RoleAccess from "@/pages/permission/RoleAccess";
 
 export default function AppRoutes() {
   const { user } = useAuth();
@@ -38,6 +42,38 @@ export default function AppRoutes() {
 
       <Route path="/register">
         <Register />
+      </Route>
+
+      <Route path="/tenant">
+        <AdminLayout>
+          <ProtectedRoute>
+            <Tenant />
+          </ProtectedRoute>
+        </AdminLayout>
+      </Route>
+
+      <Route path="/roles">
+        <AdminLayout>
+          <ProtectedRoute>
+            <Roles />
+          </ProtectedRoute>
+        </AdminLayout>
+      </Route>
+
+      <Route path="/user-access">
+        <AdminLayout>
+          <ProtectedRoute>
+            <UserRoleAccess />
+          </ProtectedRoute>
+        </AdminLayout>
+      </Route>
+
+      <Route path="/role-access">
+        <AdminLayout>
+          <ProtectedRoute>
+            <RoleAccess />
+          </ProtectedRoute>
+        </AdminLayout>
       </Route>
 
       <Route path="/">

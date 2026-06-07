@@ -14,6 +14,9 @@ export const ENDPOINTS = {
     REFRESH: `${PREFIX}/auth/refresh-token`,
   },
   SIDEBAR: {
-    GET_USER_MENUS: `${PREFIX}/auth/get-user-menus`
+    GET_USER_MENUS: `${PREFIX}/menus/get-user-menus`
+  },
+  TENANTS: {
+    CURRENT_ACTIVE: `${PREFIX}/tenant/current-active`
   }
 } as const;

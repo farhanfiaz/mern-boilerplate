@@ -1,16 +1,24 @@
-declare namespace Express {
-    export interface Request {
-        user?: any;
+import type { Request } from "express";
+
+declare global {
+  namespace Express {
+    interface Request {
+      user?: {
+        userId: string;
+        email: string;
+        isSystemAdmin: boolean;
+        tenantId: string;
+      };
     }
+  }
 }
 
-import type { Request } from "express";
 
 export interface MulterRequest extends Request {
   file?: Express.Multer.File;
   files?:
-    | Express.Multer.File[]
-    | {
-        [fieldname: string]: Express.Multer.File[];
-      };
+  | Express.Multer.File[]
+  | {
+    [fieldname: string]: Express.Multer.File[];
+  };
 }

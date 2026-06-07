@@ -44,10 +44,4 @@ export class AuthController {
         }
         return sendResponse(res as Response, HttpStatusCode.OK, true, "Refresh token successful", data);
     }
-
-    getSuperAdminMenus = async (req: Request, res: Response) => {
-        const { userId, roleId } = req.query;
-        const userMenus = await this.authService.getSuperAdminMenus(userId as string, roleId as string);
-        return sendResponse(res as Response, HttpStatusCode.OK, true, "User menus", userMenus);
-    }
 }

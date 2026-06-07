@@ -1,15 +1,17 @@
 import { db } from "@server/db/connection";
 import { AuthResponse, JWTTokenUserInfo, LoginDto, RegisterDto } from "./auth.types";
-import { userRoles, users } from "@server/db/schema";
-import { eq, and, isNull } from "drizzle-orm";
+import { menus, userRoles, users } from "@server/db/schema";
+import { eq, and, asc } from "drizzle-orm";
 import bcrypt from "bcryptjs";
 import jwt, { Secret, SignOptions } from "jsonwebtoken";
 import appConfig from "@server/config/app.config";
 import { RoleName } from "@server/enums/role.enum";
+import { TenantService } from "@server/modules/tenants/tenant.service";
 
 export class AuthService {
+    private tenantService: TenantService;
     constructor() {
-
+        this.tenantService = new TenantService();
     }
     async login(data: LoginDto): Promise<AuthResponse> {
         const userDetail = await db.query.users.findFirst({
@@ -44,13 +46,19 @@ export class AuthService {
                 },
             },
         });
+        let tenantId: string = '';
+        if (userRoles.some(role => role.role.isSystem)) {
+            tenantId = await this.tenantService.getTenantId() ?? '';
+        } else {
+            tenantId = userDetail?.tenantId ?? '';
+        }
         const userInfo: JWTTokenUserInfo = {
             userId: userDetail?.id ?? '',
             email: userDetail?.email ?? '',
             name: userDetail.username ?? '',
             userIamge: userDetail.avatarUrl ?? '',
             role: userRoles.map((role) => role.role),
-            tenantId: userDetail.tenantId ?? '',
+            tenantId: tenantId,
             firstName: userDetail.firstName ?? '',
             lastName: userDetail.lastName ?? '',
         };
@@ -89,13 +97,19 @@ export class AuthService {
                 },
             },
         });
+        let tenantId: string = '';
+        if (userRoles.some(role => role.role.isSystem)) {
+            tenantId = await this.tenantService.getTenantId() ?? '';
+        } else {
+            tenantId = userDetail?.tenantId ?? '';
+        }
         const userInfo: JWTTokenUserInfo = {
             userId: userDetail?.id ?? '',
             email: userDetail?.email ?? '',
             name: userDetail?.username ?? '',
             userIamge: userDetail?.avatarUrl ?? '',
             role: userRoles.map((role) => role.role),
-            tenantId: userDetail?.tenantId ?? '',
+            tenantId: tenantId,
             firstName: userDetail?.firstName ?? '',
             lastName: userDetail?.lastName ?? '',
         };
@@ -182,6 +196,12 @@ export class AuthService {
                 },
             },
         });
+        let tenantId: string = '';
+        if (userRoleList.some(role => role.role.isSystem)) {
+            tenantId = await this.tenantService.getTenantId() ?? '';
+        } else {
+            tenantId = newUser?.tenantId ?? '';
+        }
         const userInfo: JWTTokenUserInfo = {
             userId: newUser.id,
             email: newUser.email,
@@ -200,71 +220,5 @@ export class AuthService {
             token: accessToken,
             refreshToken: refreshToken,
         };
-    }
-    async getSuperAdminMenus(userId: string, selectedRole: string) {
-        const userDetail = await db.query.users.findFirst({
-            where: (users, { eq, isNull }) =>
-                and(
-                    eq(users.id, userId),
-                    eq(users.isActive, true),
-                    eq(users.isDeleted, false)
-                ),
-        });
-        if (!userDetail) {
-            throw new Error("User not found");
-        }
-        const userRoles = await db.query.userRoles.findMany({
-            where: (userRoles, { eq }) => (eq(userRoles.userId, userDetail?.id ?? '')),
-            columns: {
-                userId: false,
-                roleId: false,
-                assignedAt: false,
-            },
-            with: {
-                role: {
-                    columns: {
-                        id: true,
-                        name: true,
-                        isSystem: true,
-                    },
-                },
-            },
-        });
-        if (userRoles.some((role) => role.role.isSystem)) {
-            return [
-                {
-                    id: 1,
-                    name: "Dashboard",
-                    parentId: null,
-                    groupLabel: "Main",
-                    icon: "LayoutDashboard",
-                    url: "/dashboard",
-                    order: 1,
-                    createdAt: new Date(),
-                    isActive: true,
-                    isAction: false,
-                }
-            ];
-        }
-        const userRolesList = await db.query.userRoles.findMany({
-            where: (userRoles, { eq }) => (eq(userRoles.userId, userDetail?.id ?? ''), eq(userRoles.roleId, selectedRole)),
-            columns: {
-                userId: false,
-                roleId: false,
-                assignedAt: false,
-            },
-            with: {
-                role: {
-                    columns: {
-                        id: true,
-                        name: true,
-                        isSystem: true,
-                    },
-                },
-            },
-        });
-        if (!userRolesList) {
-            return [];
-        }
     }
 }

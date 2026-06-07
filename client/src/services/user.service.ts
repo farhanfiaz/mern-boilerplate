@@ -32,13 +32,3 @@ export const authRefreshToken = async (refreshToken: string): Promise<AuthRespon
   }
   return response.data;
 };
-
-export const getUserMenus = async (userId: string, roleId: string): Promise<any> => {
-  const response = await http.get<any>(
-    `${ENDPOINTS.SIDEBAR.GET_USER_MENUS}?userId=${userId}&roleId=${roleId}`
-  );
-  if (!response.success) {
-    throw new Error(response.message);
-  }
-  return response.data;
-};

@@ -8,8 +8,8 @@ import { useDesktopSidebarOptional } from "./desktop-sidebar-context";
 import { Badge } from "@/components/ui/badge";
 import * as Icons from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
-import { getUserMenus } from "@/services/user.service";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { getUserMenus } from "@/services/menu.service";
 
 export function Sidebar() {
     const { user, logout } = useAuth();
@@ -48,9 +48,9 @@ export function Sidebar() {
         enabled: !!userId && !!roleId,
     });
 
-    const menus: any[] = Array.isArray(menusData)
-        ? menusData
-        : (menusData as any)?.data || [];
+    const menus: any[] = Array.isArray(menusData?.menus)
+        ? menusData.menus
+        : [];
     const menuGroupLabels = Array.from(
         new Set(
             menus

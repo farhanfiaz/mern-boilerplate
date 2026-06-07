@@ -11,6 +11,4 @@ authRoutes.post("/register", authMiddleware.authLimiter, authMiddleware.uploadSi
 
 authRoutes.post("/refresh-token", authMiddleware.apiLimiter, authController.refreshToken);
 
-authRoutes.get("/get-user-menus", authMiddleware.apiLimiter, authMiddleware.authenticateToken, authController.getSuperAdminMenus);
-
 export default authRoutes;

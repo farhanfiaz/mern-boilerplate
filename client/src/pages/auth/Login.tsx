@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useAuth } from "../../context/AuthContext";
-import { Eye, EyeOff, Shield, Users, BarChart3, CheckCircle2 } from "lucide-react";
+import { Eye, EyeOff, ShieldCheck } from "lucide-react";
 
 import { Button } from "@/components/ui/Button";
 import { Label } from "@/components/ui/label";
@@ -12,6 +12,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 
 /* ---------------- Schema ---------------- */
+
 const loginSchema = z.object({
     email: z.string().email("Invalid email address"),
     password: z.string().min(6, "Password must be at least 6 characters"),
@@ -27,7 +28,6 @@ export default function Login() {
     const [showForgotPassword, setShowForgotPassword] = useState(false);
     const [showPassword, setShowPassword] = useState(false);
 
-    /* ---------------- Form ---------------- */
     const form = useForm<LoginForm>({
         resolver: zodResolver(loginSchema),
         defaultValues: {
@@ -36,7 +36,6 @@ export default function Login() {
         },
     });
 
-    /* ---------------- Submit ---------------- */
     const onSubmit = async (data: LoginForm) => {
         try {
             setIsLoading(true);
@@ -52,31 +51,45 @@ export default function Login() {
     };
 
     return (
-        <div className="relative flex h-dvh flex-col overflow-hidden bg-[#F8F7FC]">
-            <div className="flex flex-1 items-center justify-center px-4">
+        <div className="relative flex h-dvh bg-gradient-to-br from-gray-50 to-gray-100">
 
-                <div className="w-full max-w-[1100px] bg-white rounded-lg shadow-lg flex">
+            {/* CENTER WRAPPER */}
+            <div className="m-auto w-full max-w-5xl px-4">
 
-                    {/* LEFT SIDE */}
-                    <div className="flex-1 p-8">
-                        <h1 className="text-2xl font-bold">Welcome back</h1>
-                        <p className="text-sm text-gray-500 mb-6">
-                            Sign in to continue
-                        </p>
+                <div className="grid lg:grid-cols-2 bg-white shadow-2xl rounded-2xl overflow-hidden">
 
+                    {/* ---------------- LEFT SIDE ---------------- */}
+                    <div className="p-10">
+
+                        {/* HEADER */}
+                        <div className="mb-8">
+                            <h1 className="text-3xl font-bold tracking-tight">
+                                Welcome back
+                            </h1>
+
+                            <p className="text-sm text-gray-500 mt-2">
+                                Sign in to your account to continue
+                            </p>
+                        </div>
+
+                        {/* FORM */}
                         {!showForgotPassword ? (
-                            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+                            <form
+                                onSubmit={form.handleSubmit(onSubmit)}
+                                className="space-y-5"
+                            >
 
                                 {/* EMAIL */}
                                 <div>
                                     <Label>Email</Label>
                                     <Input
                                         type="email"
-                                        placeholder="Enter email"
+                                        placeholder="you@example.com"
+                                        className="mt-1"
                                         {...form.register("email")}
                                     />
                                     {form.formState.errors.email && (
-                                        <p className="text-red-500 text-sm">
+                                        <p className="text-red-500 text-xs mt-1">
                                             {form.formState.errors.email.message}
                                         </p>
                                     )}
@@ -86,17 +99,20 @@ export default function Login() {
                                 <div>
                                     <Label>Password</Label>
 
-                                    <div className="relative">
+                                    <div className="relative mt-1">
                                         <Input
                                             type={showPassword ? "text" : "password"}
-                                            placeholder="Enter password"
+                                            placeholder="••••••••"
                                             {...form.register("password")}
+                                            className="pr-10"
                                         />
 
                                         <button
                                             type="button"
-                                            className="absolute right-3 top-2.5"
-                                            onClick={() => setShowPassword(!showPassword)}
+                                            onClick={() =>
+                                                setShowPassword(!showPassword)
+                                            }
+                                            className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700"
                                         >
                                             {showPassword ? (
                                                 <EyeOff size={18} />
@@ -107,89 +123,106 @@ export default function Login() {
                                     </div>
 
                                     {form.formState.errors.password && (
-                                        <p className="text-red-500 text-sm">
+                                        <p className="text-red-500 text-xs mt-1">
                                             {form.formState.errors.password.message}
                                         </p>
                                     )}
                                 </div>
 
-                                {/* REMEMBER ME */}
+                                {/* OPTIONS */}
                                 <div className="flex items-center justify-between">
-                                    <div className="flex items-center gap-2">
+
+                                    <label className="flex items-center gap-2 text-sm">
                                         <Checkbox
                                             checked={isRememberMe}
                                             onCheckedChange={(val) =>
                                                 setIsRememberMe(Boolean(val))
                                             }
                                         />
-                                        <span className="text-sm">Remember me</span>
-                                    </div>
+                                        Remember me
+                                    </label>
 
                                     <button
                                         type="button"
-                                        className="text-sm text-purple-600"
-                                        onClick={() => setShowForgotPassword(true)}
+                                        onClick={() =>
+                                            setShowForgotPassword(true)
+                                        }
+                                        className="text-sm text-purple-600 hover:underline"
                                     >
                                         Forgot password?
                                     </button>
+
                                 </div>
 
-                                {/* SUBMIT */}
-                                <Button type="submit" disabled={isLoading} className="w-full">
+                                {/* BUTTON */}
+                                <Button
+                                    type="submit"
+                                    disabled={isLoading}
+                                    className="w-full rounded-xl"
+                                >
                                     {isLoading ? "Signing in..." : "Sign In"}
                                 </Button>
+
+                                {/* FOOTER */}
+                                <p className="text-center text-xs text-gray-400 mt-6">
+                                    © {new Date().getFullYear()} Your Company. All rights reserved.
+                                </p>
+
                             </form>
                         ) : (
-                            <div>
-                                <p>Forgot Password Form Placeholder</p>
-                                <button
-                                    onClick={() => setShowForgotPassword(false)}
-                                    className="text-purple-600"
-                                >
-                                    Back
-                                </button>
+                            <div className="space-y-4">
+                                <h2 className="text-lg font-semibold">
+                                    Reset Password
+                                </h2>
+
+                                <p className="text-sm text-gray-500">
+                                    Enter your email and we’ll send reset instructions.
+                                </p>
+
+                                <Input placeholder="you@example.com" />
+
+                                <div className="flex gap-2">
+                                    <Button className="w-full">
+                                        Send Link
+                                    </Button>
+
+                                    <Button
+                                        variant="outline"
+                                        onClick={() =>
+                                            setShowForgotPassword(false)
+                                        }
+                                    >
+                                        Back
+                                    </Button>
+                                </div>
                             </div>
                         )}
-
-                        {/* FOOTER */}
-                        <div className="mt-6 text-xs text-gray-500 text-center">
-                            © {new Date().getFullYear()} HR System
-                        </div>
                     </div>
 
-                    {/* RIGHT SIDE */}
-                    <div className="hidden lg:flex flex-1 bg-gradient-to-br from-purple-700 to-indigo-900 text-white p-8 flex-col justify-between">
+                    {/* ---------------- RIGHT SIDE ---------------- */}
+                    <div className="hidden lg:flex flex-col justify-between p-10 bg-gradient-to-br from-purple-700 via-indigo-700 to-indigo-900 text-white">
 
+                        {/* TOP */}
                         <div>
-                            <span className="text-xs bg-white/20 px-3 py-1 rounded-full">
-                                Live Dashboard
-                            </span>
+                            <div className="flex items-center gap-2">
+                                <ShieldCheck className="h-6 w-6" />
+                                <span className="font-semibold">
+                                    Secure Access
+                                </span>
+                            </div>
 
-                            <h2 className="mt-6 text-2xl font-bold">
-                                Manage your workforce with confidence
+                            <h2 className="text-2xl font-bold mt-6 leading-snug">
+                                Manage users, roles & permissions in one place
                             </h2>
 
-                            <p className="text-sm mt-3 text-white/80">
-                                Streamline HR operations and track performance.
+                            <p className="text-sm text-white/70 mt-3">
+                                A modern RBAC system for scalable SaaS applications.
                             </p>
                         </div>
 
-                        <div className="space-y-4">
-                            <div className="bg-white/10 p-3 rounded-lg flex justify-between">
-                                <div>
-                                    <p className="text-xs">Active Clients</p>
-                                    <p className="text-xl font-bold">6</p>
-                                </div>
-                                <Users />
-                            </div>
-
-                            <div className="bg-white/10 p-3 rounded-lg flex justify-between">
-                                <div>
-                                    <p className="text-xs">Performance</p>
-                                    <p className="text-xl font-bold">92.4%</p>
-                                </div>
-                                <BarChart3 />
-                            </div>
+                        {/* BOTTOM */}
+                        <div className="text-xs text-white/60">
+                            Built with secure authentication & role-based access control.
                         </div>
 
                     </div>

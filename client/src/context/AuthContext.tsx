@@ -1,9 +1,30 @@
-import { createContext, useContext, useEffect, useState, ReactNode } from "react";
-import { AuthContextType, AuthResponse, RegisterUser, User } from "../types/auth.types";
+import {
+  createContext,
+  useContext,
+  useEffect,
+  useState,
+  ReactNode,
+} from "react";
+
+import {
+  AuthContextType,
+  AuthResponse,
+  RegisterUser,
+  User,
+} from "../types/auth.types";
+
 import { authLogin, authRegister } from "@/services/user.service";
 import logger from "@/utils/logger";
-import { ENDPOINTS } from "@/api/endpoints";
 import { useToast } from "@/hooks/use-toast";
+
+import {
+  getStoredAuth,
+  saveStoredAuth,
+  clearStoredAuth,
+  setSelectedRole,
+} from "@/utils/auth-storage";
+
+import { initSessionKey } from "@/crypto/session";
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
@@ -16,63 +37,97 @@ export const AuthProvider = ({ children }: Props) => {
   const { toast } = useToast();
 
   useEffect(() => {
-    const stored = localStorage.getItem(ENDPOINTS.SYSTEM.LOCALSTORAGEKEY);
-    if (stored) setUser(JSON.parse(stored));
+    const initialize = async () => {
+      try {
+        // ensure crypto key is ready BEFORE decrypting
+        await initSessionKey();
+
+        const storedUser = await getStoredAuth();
+
+        if (storedUser) {
+          setUser(storedUser);
+        }
+      } catch (err) {
+        logger.error("Failed to restore session", err);
+        clearStoredAuth();
+      }
+    };
+
+    initialize();
   }, []);
 
-  const login = (userData: User) => {
-    authLogin(userData).then((resp: AuthResponse) => {
+  const login = async (userData: User) => {
+    try {
+      const resp = await authLogin(userData);
+
+      if (resp.user?.role?.length === 1) {
+        setSelectedRole(resp.user?.role?.at(0)?.id!);
+      }
       setUser(resp);
-      localStorage.setItem(ENDPOINTS.SYSTEM.LOCALSTORAGEKEY, JSON.stringify(resp));
-    }).catch((err) => {
+      await saveStoredAuth(resp);
+    } catch (err: any) {
       toast({
         title: "Invalid credentials",
-        description: err.message,
-        variant: "destructive"
+        description: err?.message ?? "Login failed",
+        variant: "destructive",
       });
+
       logger.error(err);
       throw err;
-    });
+    }
+  };
+
+  const register = async (userData: RegisterUser) => {
+    try {
+      const resp = await authRegister(userData);
+
+      setUser(resp);
+      await saveStoredAuth(resp);
+    } catch (err: any) {
+      toast({
+        title: "Registration failed",
+        description: err?.message ?? "Registration failed",
+        variant: "destructive",
+      });
+
+      logger.error(err);
+    }
   };
 
   const logout = () => {
     setUser(null);
-    localStorage.removeItem(ENDPOINTS.SYSTEM.LOCALSTORAGEKEY);
+    clearStoredAuth();
   };
 
-  const register = (userData: RegisterUser) => {
-    authRegister(userData)
-      .then((resp: AuthResponse) => {
-        setUser(resp);
-        localStorage.setItem(ENDPOINTS.SYSTEM.LOCALSTORAGEKEY, JSON.stringify(resp));
-      })
-      .catch((err) => {
-        toast({
-          title: "Invalid credentials",
-          description: err.message,
-          variant: "destructive"
-        });
-        logger.error(err);
-      });
-  }
-
-  const updateTenant = (tenantId: string) => {
+  const updateTenant = async (tenantId: string) => {
     setUser((prev) => {
       if (!prev) return null;
-      const updated = {
+
+      const updated: AuthResponse = {
         ...prev,
         user: {
           ...prev.user,
           tenantId,
         },
       };
-      localStorage.setItem(ENDPOINTS.SYSTEM.LOCALSTORAGEKEY, JSON.stringify(updated));
+
+      // persist encrypted update (fire-and-forget safe)
+      saveStoredAuth(updated).catch(logger.error);
+
       return updated;
     });
   };
 
   return (
-    <AuthContext.Provider value={{ user, login, logout, register, updateTenant }}>
+    <AuthContext.Provider
+      value={{
+        user,
+        login,
+        logout,
+        register,
+        updateTenant,
+      }}
+    >
       {children}
     </AuthContext.Provider>
   );
@@ -80,8 +135,10 @@ export const AuthProvider = ({ children }: Props) => {
 
 export const useAuth = (): AuthContextType => {
   const context = useContext(AuthContext);
+
   if (!context) {
     throw new Error("useAuth must be used inside AuthProvider");
   }
+
   return context;
 };

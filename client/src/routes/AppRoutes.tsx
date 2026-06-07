@@ -11,16 +11,19 @@ import Tenant from "@/pages/tenant/Tenant";
 import Roles from "@/pages/permission/Roles";
 import UserRoleAccess from "@/pages/permission/UserRoleAccess";
 import RoleAccess from "@/pages/permission/RoleAccess";
+import Users from "@/pages/auth/Users";
+import { getSelectedRole } from "@/utils/auth-storage";
 
 export default function AppRoutes() {
   const { user } = useAuth();
+  const selectedRole = getSelectedRole();
 
   return (
     <Switch>
       <Route path="/login">
         {!user ? (
           <Login />
-        ) : user.user.role.length > 1 ? (
+        ) : !selectedRole ? (
           <Redirect to="/multiple-role" />
         ) : (
           <Redirect to="/dashboard" />
@@ -72,6 +75,14 @@ export default function AppRoutes() {
         <AdminLayout>
           <ProtectedRoute>
             <RoleAccess />
+          </ProtectedRoute>
+        </AdminLayout>
+      </Route>
+
+      <Route path="/users">
+        <AdminLayout>
+          <ProtectedRoute>
+            <Users />
           </ProtectedRoute>
         </AdminLayout>
       </Route>

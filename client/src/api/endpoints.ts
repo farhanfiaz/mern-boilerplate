@@ -2,10 +2,13 @@ export const PREFIX = "api";
 
 export const ENDPOINTS = {
   PREFIX,
+  LOCALSTORAGE: {
+    USER: "user",
+    SELECTED_ROLE: "selectedRole",
+  },
   SYSTEM: {
     BACKEND: `${PREFIX}`,
     HEALTH: `${PREFIX}/health`,
-    LOCALSTORAGEKEY: "user",
   },
   AUTH: {
     LOGIN: `${PREFIX}/auth/login`,

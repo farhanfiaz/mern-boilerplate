@@ -49,4 +49,14 @@ export const defaultMenus = [
         isActive: true,
         isAction: false,
     },
+    {
+        name: "Users",
+        parentId: null,
+        groupLabel: "User Management",
+        icon: "Users",
+        url: "/users",
+        sortOrder: 6,
+        isActive: true,
+        isAction: false,
+    }
 ];

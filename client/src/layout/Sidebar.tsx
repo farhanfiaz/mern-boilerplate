@@ -108,32 +108,29 @@ export function Sidebar() {
             </div>
 
             {/* User Info */}
-            <div className="border-b border-sidebar-border">
-                <div className="flex items-center gap-[6px]">
-                    <Avatar className="h-10 w-10 rounded-full ring-2 sm:ring-3 ring-violet-300/50 ring-offset-2 ring-offset-white shadow-lg relative z-10 group-hover:ring-violet-400/70 transition-all duration-300">
+            <div className="border-b border-sidebar-border px-4 py-4">
+                <div className="flex items-center gap-3">
+                    <Avatar className="h-10 w-10 shrink-0 rounded-full ring-2 ring-violet-300/50">
                         <AvatarImage
-                            loading="lazy"
                             src={`/api/users/${user?.user?.userId}/photo`}
-                            alt={
-                                `${user?.user?.firstName || ""} ${user?.user?.lastName || ""
-                                    }`.trim() || "Profile"
-                            }
+                            alt={user?.user?.name || "Profile"}
                         />
-                        <AvatarFallback className="text-primary">
+                        <AvatarFallback>
                             {getInitials(user?.user?.firstName, user?.user?.lastName)}
                         </AvatarFallback>
                     </Avatar>
-                    <div className="ml-[5px]">
-                        <div className="text-sm font-medium text-sidebar-foreground">
+
+                    <div className="min-w-0">
+                        <p className="truncate text-sm font-medium text-sidebar-foreground">
                             {user?.user?.name}
-                        </div>
-                        {/* <div className="text-xs text-muted-foreground capitalize">
-              {getRoleTypeLabel(selectedRole || "")}
-            </div> */}
+                        </p>
+
+                        <p className="text-xs text-muted-foreground">
+                            Super Admin
+                        </p>
                     </div>
                 </div>
             </div>
-
             {/* Navigation */}
             <nav
                 className={cn(

@@ -1,8 +1,19 @@
-import logger from "@/utils/logger";
 import axios from "axios";
 import { ENDPOINTS } from "./endpoints";
+import logger from "@/utils/logger";
+
+import {
+  clearStoredAuth,
+  getStoredAuth,
+  saveStoredAuth,
+} from "@/utils/auth-storage";
+
+import {
+  encrypt,
+  decrypt,
+} from "@/crypto/aes";
+
 import { getSessionKey } from "@/crypto/session";
-import { decrypt, encrypt } from "@/crypto/aes";
 
 const axiosInstance = axios.create({
   baseURL: import.meta.env.VITE_API_URL,
@@ -17,66 +28,64 @@ let isRefreshing = false;
 let failedQueue: any[] = [];
 
 const processQueue = (error: any, token: string | null = null) => {
-  failedQueue.forEach((prom) => {
-    if (error) {
-      prom.reject(error);
-    } else {
-      prom.resolve(token);
-    }
+  failedQueue.forEach((p) => {
+    error ? p.reject(error) : p.resolve(token);
   });
   failedQueue = [];
 };
 
-axiosInstance.interceptors.request.use(
-  async (config) => {
-    const apiKey = import.meta.env.VITE_API_KEYS;
-    const raw = localStorage.getItem(ENDPOINTS.SYSTEM.LOCALSTORAGEKEY);
-    const userObj = raw ? JSON.parse(raw) : null;
+const getKeySafe = () => {
+  try {
+    return getSessionKey();
+  } catch (e) {
+    logger.error("Session key not ready", e);
+    throw e;
+  }
+};
 
-    const token = userObj?.token;
-    if (token) {
-      config.headers.Authorization = `Bearer ${token}`;
+// ---------------- REQUEST ----------------
+axiosInstance.interceptors.request.use(async (config) => {
+  const apiKey = import.meta.env.VITE_API_KEYS;
+
+  const userObj = await getStoredAuth();
+
+  if (userObj?.token) {
+    config.headers.Authorization = `Bearer ${userObj.token}`;
+  }
+
+  if (apiKey) {
+    config.headers["x-api-key"] = apiKey;
+  }
+
+  if (userObj?.user?.tenantId) {
+    config.headers["tenant-id"] = userObj.user.tenantId;
+  }
+
+  if (userObj?.user?.userId) {
+    config.headers["user-id"] = userObj.user.userId;
+  }
+
+  // encrypt payload
+  if (config.data) {
+    const isEncrypted =
+      typeof config.data === "object" &&
+      config.data !== null &&
+      "iv" in config.data &&
+      "data" in config.data;
+
+    if (!isEncrypted) {
+      const key = getKeySafe();
+      config.data = await encrypt(key, config.data);
     }
-    if (apiKey) {
-      config.headers['x-api-key'] = apiKey;
-    }
+  }
 
-    const tenantId = userObj?.user?.tenantId;
-    if (tenantId) {
-      config.headers['tenant-id'] = tenantId;
-    }
+  return config;
+});
 
-    const userId = userObj?.user?.userId;
-    if (userId) {
-      config.headers['user-id'] = userId;
-    }
-
-    const key = getSessionKey();
-
-    if (config.data) {
-      // Prevent double encryption of payload when request is retried
-      const isAlreadyEncrypted =
-        typeof config.data === "object" &&
-        config.data !== null &&
-        "iv" in config.data &&
-        "data" in config.data &&
-        typeof (config.data as any).iv === "string" &&
-        typeof (config.data as any).data === "string";
-
-      if (!isAlreadyEncrypted) {
-        const encrypted = await encrypt(key, config.data);
-        config.data = encrypted; // replace payload
-      }
-    }
-
-    return config;
-  },
-  (error) => Promise.reject(error)
-);
-
+// ---------------- RESPONSE ----------------
 axiosInstance.interceptors.response.use(
   async (response) => {
-    const key = getSessionKey();
+    const key = getKeySafe();
 
     if (response.data?.iv && response.data?.data) {
       response.data = await decrypt(key, response.data);
@@ -86,74 +95,89 @@ axiosInstance.interceptors.response.use(
   },
 
   async (error) => {
-    const key = getSessionKey();
+    const key = getKeySafe();
 
     if (error.response?.data?.iv && error.response?.data?.data) {
-      error.response.data = await decrypt(key, error.response.data);
+      error.response.data = await decrypt(
+        key,
+        error.response.data
+      );
     }
 
     const originalRequest = error.config;
-    const isTokenExpired = error.response?.status === 401 && (
-      error.response?.data?.message === "Token expired..!" ||
-      error.message === "Token expired..!"
-    );
 
-    if (isTokenExpired && !originalRequest._retry && originalRequest.url !== ENDPOINTS.AUTH.REFRESH) {
+    const isTokenExpired =
+      error.response?.status === 401 &&
+      (error.response?.data?.message === "Token expired..!" ||
+        error.message === "Token expired..!");
+
+    // ignore refresh endpoint
+    if (
+      originalRequest.url === ENDPOINTS.AUTH.REFRESH
+    ) {
+      logger.error("Refresh request failed: ", error);
+      return Promise.reject(error);
+    }
+
+    if (isTokenExpired && !originalRequest._retry) {
       if (isRefreshing) {
         return new Promise((resolve, reject) => {
           failedQueue.push({ resolve, reject });
-        })
-          .then((token) => {
-            originalRequest.headers.Authorization = `Bearer ${token}`;
-            return axiosInstance(originalRequest);
-          })
-          .catch((err) => Promise.reject(err));
+        }).then((token) => {
+          originalRequest.headers.Authorization = `Bearer ${token}`;
+          return axiosInstance(originalRequest);
+        });
       }
 
       originalRequest._retry = true;
       isRefreshing = true;
 
-      const raw = localStorage.getItem(ENDPOINTS.SYSTEM.LOCALSTORAGEKEY);
-      const userObj = raw ? JSON.parse(raw) : null;
+      const userObj = await getStoredAuth();
+
       const refreshToken = userObj?.refreshToken;
 
-      if (refreshToken) {
-        return new Promise((resolve, reject) => {
-          axiosInstance.post(ENDPOINTS.AUTH.REFRESH, { refreshToken })
-            .then((res: any) => {
-              if (res.success && res.data) {
-                const newAuthData = res.data;
-                localStorage.setItem(ENDPOINTS.SYSTEM.LOCALSTORAGEKEY, JSON.stringify(newAuthData));
-
-                originalRequest.headers.Authorization = `Bearer ${newAuthData.token}`;
-                originalRequest.headers['user-id'] = newAuthData.user.userId;
-                if (newAuthData.user.tenantId) {
-                  originalRequest.headers['tenant-id'] = newAuthData.user.tenantId;
-                }
-
-                processQueue(null, newAuthData.token);
-                resolve(axiosInstance(originalRequest));
-              } else {
-                processQueue(new Error("Refresh failed"), null);
-                localStorage.removeItem(ENDPOINTS.SYSTEM.LOCALSTORAGEKEY);
-                window.location.href = "/login";
-                reject(new Error("Refresh failed"));
-              }
-            })
-            .catch((err) => {
-              processQueue(err, null);
-              localStorage.removeItem(ENDPOINTS.SYSTEM.LOCALSTORAGEKEY);
-              window.location.href = "/login";
-              reject(err);
-            })
-            .finally(() => {
-              isRefreshing = false;
-            });
-        });
+      if (!refreshToken) {
+        clearStoredAuth();
+        window.location.href = "/login";
+        return Promise.reject(error);
       }
+
+      return new Promise((resolve, reject) => {
+        axiosInstance
+          .post(ENDPOINTS.AUTH.REFRESH, {
+            refreshToken,
+          })
+          .then(async (res: any) => {
+            const newAuthData = res?.data?.data ?? res?.data;
+
+            if (!newAuthData?.token) {
+              logger.error("Invalid refresh response");
+              throw new Error("Invalid refresh response");
+            }
+
+            await saveStoredAuth(newAuthData);
+
+            processQueue(null, newAuthData.token);
+
+            originalRequest.headers.Authorization =
+              `Bearer ${newAuthData.token}`;
+
+            resolve(axiosInstance(originalRequest));
+          })
+          .catch((err) => {
+            logger.error(err);
+            processQueue(err, null);
+            clearStoredAuth();
+            window.location.href = "/login";
+            reject(err);
+          })
+          .finally(() => {
+            isRefreshing = false;
+          });
+      });
     }
 
-    return Promise.reject(error.response?.data || error);
+    return Promise.reject(error);
   }
 );
 

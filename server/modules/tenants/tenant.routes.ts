@@ -6,14 +6,14 @@ const tenantController = new TenantController();
 
 tenantRoutes.get("/current-active", tenantController.getCurrentActiveTenant);
 
-tenantRoutes.get("/", tenantController.getTenant);
+tenantRoutes.get("/get-all-tenants", tenantController.getTenant);
 
-tenantRoutes.post("/", tenantController.createTenant);
+tenantRoutes.post("/create-tenant", tenantController.createTenant);
 
-tenantRoutes.get("/", tenantController.getTenants);
+tenantRoutes.put("/edit-tenant/:id", tenantController.updateTenant);
 
-tenantRoutes.put("/:id", tenantController.updateTenant);
+tenantRoutes.delete("/delete-tenant/:id", tenantController.deleteTenant);
 
-tenantRoutes.delete("/:id", tenantController.deleteTenant);
+tenantRoutes.put("/in-active-tenant/:id", tenantController.inActiveTenant);
 
 export default tenantRoutes;

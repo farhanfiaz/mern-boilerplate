@@ -20,6 +20,11 @@ export const ENDPOINTS = {
     GET_USER_MENUS: `${PREFIX}/menus/get-user-menus`
   },
   TENANTS: {
-    CURRENT_ACTIVE: `${PREFIX}/tenant/current-active`
+    CURRENT_ACTIVE: `${PREFIX}/tenant/current-active`,
+    GET_ALL_TENANTS: `${PREFIX}/tenant/get-all-tenants`,
+    CREATE_TENANT: `${PREFIX}/tenant/create-tenant`,
+    EDIT_TENANT: `${PREFIX}/tenant/edit-tenant`,
+    DELETE_TENANT: `${PREFIX}/tenant/delete-tenant`,
+    IN_ACTIVE_TENANT: `${PREFIX}/tenant/in-active-tenant`,
   }
 } as const;

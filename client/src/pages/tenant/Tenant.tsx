@@ -29,58 +29,33 @@ import {
     TableRow,
 } from "@/components/ui/table";
 
-import { Pencil, Plus, Search, Trash2 } from "lucide-react";
-import { useMemo, useState } from "react";
+import {
+    getAllTenants,
+    createTenant,
+    editTenant,
+    deleteTenant,
+    inActiveTenant,
+} from "@/services/tenant.service";
 
-/* ---------------- TYPES ---------------- */
-type Tenant = {
-    id: string;
-    name: string;
-    slug: string;
-    description?: string;
-    website?: string;
-    logo?: string;
-    isActive: boolean;
-    isDeleted: boolean;
-    createdAt: string;
-};
+import { PaginatedTenants, Tenant } from "@/types/tenant/tenant.types";
+import { Pencil, Plus, Search, Trash2 } from "lucide-react";
+import { useEffect, useState } from "react";
 
 export default function TenantPage() {
-
-    /* ---------------- DATA ---------------- */
-    const [tenants, setTenants] = useState<Tenant[]>([
-        {
-            id: "1",
-            name: "Acme Corp",
-            slug: "acme",
-            description: "Tech company",
-            website: "https://acme.com",
-            logo: "",
-            isActive: true,
-            isDeleted: false,
-            createdAt: new Date().toISOString(),
-        },
-        {
-            id: "2",
-            name: "Beta Ltd",
-            slug: "beta",
-            description: "Finance company",
-            website: "https://beta.com",
-            logo: "",
-            isActive: false,
-            isDeleted: false,
-            createdAt: new Date().toISOString(),
-        },
-    ]);
-
     /* ---------------- STATE ---------------- */
-    const [open, setOpen] = useState(false);
-    const [editing, setEditing] = useState(false);
-    const [editingId, setEditingId] = useState<string | null>(null);
+    const [data, setData] = useState<PaginatedTenants | null>(null);
 
     const [search, setSearch] = useState("");
     const [page, setPage] = useState(1);
     const pageSize = 5;
+
+    const tenants = data?.data ?? [];
+    const pagination = data?.pagination;
+
+    /* ---------------- MODAL ---------------- */
+    const [open, setOpen] = useState(false);
+    const [editing, setEditing] = useState(false);
+    const [editingId, setEditingId] = useState<string | null>(null);
 
     /* ---------------- FORM ---------------- */
     const [form, setForm] = useState({
@@ -88,10 +63,20 @@ export default function TenantPage() {
         slug: "",
         description: "",
         website: "",
-        logo: "", // ✅ ADDED
+        logo: "",
     });
 
-    /* ---------------- FILE HANDLER ---------------- */
+    /* ---------------- FETCH ---------------- */
+    const fetchTenants = async () => {
+        const res = await getAllTenants(page, pageSize, search);
+        setData(res);
+    };
+
+    useEffect(() => {
+        fetchTenants();
+    }, [page, search]);
+
+    /* ---------------- FILE UPLOAD ---------------- */
     const handleLogoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
         if (!file) return;
@@ -100,31 +85,11 @@ export default function TenantPage() {
         reader.onloadend = () => {
             setForm((prev) => ({
                 ...prev,
-                logo: reader.result as string, // base64 preview
+                logo: reader.result as string,
             }));
         };
-
         reader.readAsDataURL(file);
     };
-
-    /* ---------------- FILTER ---------------- */
-    const filtered = useMemo(() => {
-        return tenants.filter(
-            (t) =>
-                !t.isDeleted &&
-                `${t.name} ${t.slug} ${t.website}`
-                    .toLowerCase()
-                    .includes(search.toLowerCase())
-        );
-    }, [tenants, search]);
-
-    /* ---------------- PAGINATION ---------------- */
-    const paginated = useMemo(() => {
-        const start = (page - 1) * pageSize;
-        return filtered.slice(start, start + pageSize);
-    }, [filtered, page]);
-
-    const totalPages = Math.ceil(filtered.length / pageSize);
 
     /* ---------------- ADD ---------------- */
     const handleAdd = () => {
@@ -144,6 +109,7 @@ export default function TenantPage() {
     const handleEdit = (tenant: Tenant) => {
         setEditing(true);
         setEditingId(tenant.id);
+
         setForm({
             name: tenant.name,
             slug: tenant.slug,
@@ -151,42 +117,59 @@ export default function TenantPage() {
             website: tenant.website || "",
             logo: tenant.logo || "",
         });
+
         setOpen(true);
     };
 
-    /* ---------------- SAVE ---------------- */
-    const handleSubmit = (e: React.FormEvent) => {
+    /* ---------------- CREATE / UPDATE ---------------- */
+    const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
 
-        if (editing && editingId) {
-            setTenants((prev) =>
-                prev.map((t) =>
-                    t.id === editingId ? { ...t, ...form } : t
-                )
-            );
-        } else {
-            setTenants((prev) => [
-                ...prev,
-                {
-                    id: crypto.randomUUID(),
-                    ...form,
-                    isActive: true,
-                    isDeleted: false,
-                    createdAt: new Date().toISOString(),
-                },
-            ]);
-        }
+        try {
+            if (editing && editingId) {
+                await editTenant(
+                    editingId,
+                    form.name,
+                    form.slug,
+                    form.description,
+                    form.website,
+                    form.logo
+                );
+            } else {
+                await createTenant(
+                    form.name,
+                    form.slug,
+                    form.description,
+                    form.website,
+                    form.logo
+                );
+            }
 
-        setOpen(false);
+            setOpen(false);
+            await fetchTenants();
+        } catch (err) {
+            console.error(err);
+        }
     };
 
     /* ---------------- DELETE ---------------- */
-    const handleDelete = (id: string) => {
-        setTenants((prev) =>
-            prev.map((t) =>
-                t.id === id ? { ...t, isDeleted: true } : t
-            )
-        );
+    const handleDelete = async (id: string) => {
+        try {
+            await deleteTenant(id);
+            await fetchTenants();
+        } catch (err) {
+            console.error(err);
+        }
+    };
+
+    /* ---------------- ACTIVE / INACTIVE ---------------- */
+    const handleToggleActive = async (id: string) => {
+        try {
+            await inActiveTenant(id);
+            await fetchTenants();
+        } catch (err) {
+            console.error(err);
+        }
     };
 
     /* ---------------- UI ---------------- */
@@ -232,10 +215,9 @@ export default function TenantPage() {
                     </TableHeader>
 
                     <TableBody>
-                        {paginated.map((tenant) => (
+                        {tenants.map((tenant) => (
                             <TableRow key={tenant.id}>
 
-                                {/* LOGO */}
                                 <TableCell>
                                     {tenant.logo ? (
                                         <img
@@ -266,6 +248,7 @@ export default function TenantPage() {
                                 <TableCell className="text-right">
                                     <div className="flex justify-end gap-2">
 
+                                        {/* EDIT */}
                                         <Button
                                             size="icon"
                                             variant="outline"
@@ -274,6 +257,16 @@ export default function TenantPage() {
                                             <Pencil className="h-4 w-4" />
                                         </Button>
 
+                                        {/* TOGGLE ACTIVE */}
+                                        <Button
+                                            size="sm"
+                                            variant="outline"
+                                            onClick={() => handleToggleActive(tenant.id)}
+                                        >
+                                            {tenant.isActive ? "Deactivate" : "Activate"}
+                                        </Button>
+
+                                        {/* DELETE */}
                                         <AlertDialog>
                                             <AlertDialogTrigger asChild>
                                                 <Button size="icon" variant="destructive">
@@ -283,14 +276,19 @@ export default function TenantPage() {
 
                                             <AlertDialogContent>
                                                 <AlertDialogHeader>
-                                                    <AlertDialogTitle>Delete Tenant</AlertDialogTitle>
+                                                    <AlertDialogTitle>
+                                                        Delete Tenant
+                                                    </AlertDialogTitle>
                                                     <AlertDialogDescription>
                                                         This will remove <strong>{tenant.name}</strong>
                                                     </AlertDialogDescription>
                                                 </AlertDialogHeader>
 
                                                 <AlertDialogFooter>
-                                                    <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                                    <AlertDialogCancel>
+                                                        Cancel
+                                                    </AlertDialogCancel>
+
                                                     <AlertDialogAction
                                                         onClick={() => handleDelete(tenant.id)}
                                                         className="bg-red-600 hover:bg-red-700"
@@ -308,7 +306,6 @@ export default function TenantPage() {
                         ))}
                     </TableBody>
                 </Table>
-
             </div>
 
             {/* MODAL */}
@@ -323,23 +320,15 @@ export default function TenantPage() {
 
                     <form onSubmit={handleSubmit} className="space-y-3">
 
-                        {/* LOGO UPLOAD */}
-                        <div className="space-y-2">
-                            <label className="text-sm font-medium">Logo</label>
+                        {/* LOGO */}
+                        <Input type="file" accept="image/*" onChange={handleLogoUpload} />
 
-                            <Input
-                                type="file"
-                                accept="image/*"
-                                onChange={handleLogoUpload}
+                        {form.logo && (
+                            <img
+                                src={form.logo}
+                                className="h-14 w-14 rounded-md border object-cover"
                             />
-
-                            {form.logo && (
-                                <img
-                                    src={form.logo}
-                                    className="h-14 w-14 rounded-md border object-cover"
-                                />
-                            )}
-                        </div>
+                        )}
 
                         <Input
                             placeholder="Name"

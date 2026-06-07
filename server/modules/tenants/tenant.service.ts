@@ -1,6 +1,6 @@
 import { db } from "@server/db/connection";
 import { tenants, users } from "@server/db/schema";
-import { and, desc, eq } from "drizzle-orm";
+import { and, count, desc, eq, ilike, or, sql } from "drizzle-orm";
 import { ActiveTenant } from "./tenant.types";
 
 export class TenantService {
@@ -33,16 +33,101 @@ export class TenantService {
         return tenants;
     }
 
-    async getAllTenants() {
-        const allTenants = await db.select().from(tenants);
-        return allTenants;
+    async getAllTenants(page: number = 1, limit: number = 10, search?: any) {
+        const offset = (page - 1) * limit;
+
+        const searchTerm =
+            search && search.trim() !== '' ? `%${search.trim()}%` : null;
+
+        const baseFilter = searchTerm
+            ? or(
+                ilike(tenants.name, searchTerm),
+                ilike(tenants.description, searchTerm)
+            )
+            : undefined;
+
+        const [data, totalResult] = await Promise.all([
+            db
+                .select()
+                .from(tenants)
+                .where(baseFilter)
+                .orderBy(desc(tenants.createdAt))
+                .limit(limit)
+                .offset(offset),
+
+            db
+                .select({ count: count() })
+                .from(tenants)
+                .where(baseFilter),
+        ]);
+
+        const total = Number(totalResult[0].count);
+
+        return {
+            data,
+            pagination: {
+                page,
+                limit,
+                total,
+                totalPages: Math.ceil(total / limit),
+            },
+        };
     }
 
-    async getUserAllTenants(userId: string) {
-        const userAllTenants = await db.select().from(tenants)
-            .innerJoin(users, eq(tenants.id, users.tenantId))
-            .where(eq(users.id, userId));
-        return userAllTenants;
+    async getUserAllTenants(page: number = 1, limit: number = 10, userId: string, search?: any) {
+        const offset = (page - 1) * limit;
+
+        const user = await db
+            .select({ tenantId: users.tenantId })
+            .from(users)
+            .where(eq(users.id, userId))
+            .limit(1);
+
+        const tenantId = user[0]?.tenantId;
+
+        if (!tenantId) {
+            return { data: [], pagination: { page, limit, total: 0, totalPages: 0 } };
+        }
+
+        const searchTerm =
+            search && search.trim() !== '' ? `%${search.trim()}%` : null;
+
+        const baseFilter = and(
+            eq(tenants.id, tenantId),
+            searchTerm
+                ? or(
+                    ilike(tenants.name, searchTerm),
+                    ilike(tenants.description, searchTerm)
+                )
+                : undefined
+        );
+
+        const [data, totalResult] = await Promise.all([
+            db
+                .select()
+                .from(tenants)
+                .where(baseFilter)
+                .orderBy(desc(tenants.createdAt))
+                .limit(limit)
+                .offset(offset),
+
+            db
+                .select({ count: sql<number>`count(*)` })
+                .from(tenants)
+                .where(baseFilter),
+        ]);
+
+        const total = Number(totalResult[0].count);
+
+        return {
+            data,
+            pagination: {
+                page,
+                limit,
+                total,
+                totalPages: Math.ceil(total / limit),
+            },
+        };
     }
 
     async createTenant() {

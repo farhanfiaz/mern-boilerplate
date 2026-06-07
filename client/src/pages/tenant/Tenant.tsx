@@ -28,6 +28,7 @@ import {
     TableHeader,
     TableRow,
 } from "@/components/ui/table";
+import { useToast } from "@/hooks/use-toast";
 
 import {
     getAllTenants,
@@ -42,6 +43,7 @@ import { Pencil, Plus, Search, Trash2 } from "lucide-react";
 import { useEffect, useState } from "react";
 
 export default function TenantPage() {
+    const { toast } = useToast();
     /* ---------------- STATE ---------------- */
     const [data, setData] = useState<PaginatedTenants | null>(null);
 
@@ -135,6 +137,10 @@ export default function TenantPage() {
                     form.website,
                     form.logo
                 );
+                toast({
+                    title: "Tenant updated",
+                    variant: "success",
+                });
             } else {
                 await createTenant(
                     form.name,
@@ -143,12 +149,20 @@ export default function TenantPage() {
                     form.website,
                     form.logo
                 );
+                toast({
+                    title: "Tenant created",
+                    variant: "success",
+                });
             }
 
             setOpen(false);
             await fetchTenants();
         } catch (err) {
             console.error(err);
+            toast({
+                title: "Tenant create/update failed",
+                variant: "destructive",
+            });
         }
     };
 
@@ -156,19 +170,35 @@ export default function TenantPage() {
     const handleDelete = async (id: string) => {
         try {
             await deleteTenant(id);
+            toast({
+                title: "Tenant deleted",
+                variant: "success",
+            });
             await fetchTenants();
         } catch (err) {
             console.error(err);
+            toast({
+                title: "Tenant delete failed",
+                variant: "destructive",
+            });
         }
     };
 
     /* ---------------- ACTIVE / INACTIVE ---------------- */
-    const handleToggleActive = async (id: string) => {
+    const handleToggleActive = async (id: string, isActive: boolean) => {
         try {
             await inActiveTenant(id);
+            toast({
+                title: isActive ? "Tenant deactivated" : "Tenant activated",
+                variant: "success",
+            });
             await fetchTenants();
         } catch (err) {
             console.error(err);
+            toast({
+                title: isActive ? "Tenant deactivate failed" : "Tenant activate failed",
+                variant: "destructive",
+            });
         }
     };
 
@@ -261,7 +291,7 @@ export default function TenantPage() {
                                         <Button
                                             size="sm"
                                             variant="outline"
-                                            onClick={() => handleToggleActive(tenant.id)}
+                                            onClick={() => handleToggleActive(tenant.id, tenant.isActive)}
                                         >
                                             {tenant.isActive ? "Deactivate" : "Activate"}
                                         </Button>

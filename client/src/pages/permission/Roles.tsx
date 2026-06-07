@@ -29,54 +29,38 @@ import {
     TableRow,
 } from "@/components/ui/table";
 
-import { Pencil, Plus, Search, Trash2 } from "lucide-react";
-import { useMemo, useState } from "react";
+import { Role, AllRoles } from "@/types/role/role.types";
 
-/* ---------------- TYPE ---------------- */
-type Role = {
-    id: string;
-    name: string;
-    description?: string;
-    isSystem: boolean;
-    createdAt: string;
-    tenantId?: string;
-};
+import {
+    getAllRoles,
+    createRole,
+    updateRole,
+    deleteRole,
+    inActiveRole,
+} from "@/services/role.service";
+
+import { Pencil, Plus, Search, Trash2 } from "lucide-react";
+import { useEffect, useState } from "react";
+import { useToast } from "@/hooks/use-toast";
 
 export default function Roles() {
 
-    /* ---------------- DATA ---------------- */
-    const [roles, setRoles] = useState<Role[]>([
-        {
-            id: "1",
-            name: "admin",
-            description: "Full system access",
-            isSystem: true,
-            createdAt: new Date().toISOString(),
-        },
-        {
-            id: "2",
-            name: "user",
-            description: "Basic access",
-            isSystem: true,
-            createdAt: new Date().toISOString(),
-        },
-        {
-            id: "3",
-            name: "moderator",
-            description: "Moderation access",
-            isSystem: false,
-            createdAt: new Date().toISOString(),
-        },
-    ]);
+    const { toast } = useToast();
 
     /* ---------------- STATE ---------------- */
-    const [open, setOpen] = useState(false);
-    const [editing, setEditing] = useState(false);
-    const [editingId, setEditingId] = useState<string | null>(null);
+    const [data, setData] = useState<AllRoles | null>(null);
 
     const [search, setSearch] = useState("");
     const [page, setPage] = useState(1);
     const pageSize = 5;
+
+    const roles = data?.data ?? [];
+    const pagination = data?.pagination;
+
+    /* ---------------- MODAL ---------------- */
+    const [open, setOpen] = useState(false);
+    const [editing, setEditing] = useState(false);
+    const [editingId, setEditingId] = useState<string | null>(null);
 
     /* ---------------- FORM ---------------- */
     const [form, setForm] = useState({
@@ -84,21 +68,27 @@ export default function Roles() {
         description: "",
     });
 
-    /* ---------------- FILTER ---------------- */
-    const filtered = useMemo(() => {
-        return roles.filter(
-            (r) =>
-                `${r.name} ${r.description}`
-                    .toLowerCase()
-                    .includes(search.toLowerCase())
-        );
-    }, [roles, search]);
+    /* ---------------- FETCH ---------------- */
+    const fetchRoles = async () => {
+        const res = await getAllRoles();
+        setData(res);
+    };
 
-    /* ---------------- PAGINATION ---------------- */
-    const paginated = useMemo(() => {
-        const start = (page - 1) * pageSize;
-        return filtered.slice(start, start + pageSize);
-    }, [filtered, page]);
+    useEffect(() => {
+        fetchRoles();
+    }, []);
+
+    /* ---------------- FILTER + PAGINATION (LOCAL UI ONLY) ---------------- */
+    const filtered = roles.filter((r) =>
+        `${r.name} ${r.description}`
+            .toLowerCase()
+            .includes(search.toLowerCase())
+    );
+
+    const paginated = filtered.slice(
+        (page - 1) * pageSize,
+        page * pageSize
+    );
 
     const totalPages = Math.ceil(filtered.length / pageSize);
 
@@ -106,10 +96,7 @@ export default function Roles() {
     const handleAdd = () => {
         setEditing(false);
         setEditingId(null);
-        setForm({
-            name: "",
-            description: "",
-        });
+        setForm({ name: "", description: "" });
         setOpen(true);
     };
 
@@ -117,43 +104,89 @@ export default function Roles() {
     const handleEdit = (role: Role) => {
         setEditing(true);
         setEditingId(role.id);
+
         setForm({
             name: role.name,
             description: role.description || "",
         });
+
         setOpen(true);
     };
 
-    /* ---------------- SAVE ---------------- */
-    const handleSubmit = (e: React.FormEvent) => {
+    /* ---------------- SAVE (CREATE / UPDATE) ---------------- */
+    const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
 
-        if (editing && editingId) {
-            setRoles((prev) =>
-                prev.map((r) =>
-                    r.id === editingId
-                        ? { ...r, ...form }
-                        : r
-                )
-            );
-        } else {
-            setRoles((prev) => [
-                ...prev,
-                {
-                    id: crypto.randomUUID(),
-                    ...form,
+        try {
+            if (editing && editingId) {
+                await updateRole(editingId, {
+                    ...roles.find((r) => r.id === editingId)!,
+                    name: form.name,
+                    description: form.description,
+                });
+                toast({
+                    title: "Role updated",
+                    variant: "success",
+                });
+            } else {
+                await createRole({
+                    id: "",
+                    name: form.name,
+                    description: form.description,
                     isSystem: false,
                     createdAt: new Date().toISOString(),
-                },
-            ]);
-        }
+                });
+                toast({
+                    title: "Role created",
+                    variant: "success",
+                });
+            }
 
-        setOpen(false);
+            setOpen(false);
+            await fetchRoles();
+        } catch (err) {
+            console.error(err);
+            toast({
+                title: "Role create/update failed",
+                variant: "destructive",
+            });
+        }
     };
 
     /* ---------------- DELETE ---------------- */
-    const handleDelete = (id: string) => {
-        setRoles((prev) => prev.filter((r) => r.id !== id));
+    const handleDelete = async (id: string) => {
+        try {
+            await deleteRole(id);
+            toast({
+                title: "Role deleted",
+                variant: "success",
+            });
+            await fetchRoles();
+        } catch (err) {
+            console.error(err);
+            toast({
+                title: "Role delete failed",
+                variant: "destructive",
+            });
+        }
+    };
+
+    /* ---------------- ACTIVE / INACTIVE ---------------- */
+    const handleToggle = async (id: string) => {
+        try {
+            await inActiveRole(id);
+            toast({
+                title: "Role updated",
+                variant: "success",
+            });
+            await fetchRoles();
+        } catch (err) {
+            console.error(err);
+            toast({
+                title: "Role update failed",
+                variant: "destructive",
+            });
+        }
     };
 
     /* ---------------- UI ---------------- */
@@ -213,9 +246,7 @@ export default function Roles() {
                                     {role.isSystem ? (
                                         <Badge>System</Badge>
                                     ) : (
-                                        <Badge variant="secondary">
-                                            Custom
-                                        </Badge>
+                                        <Badge variant="secondary">Custom</Badge>
                                     )}
                                 </TableCell>
 
@@ -226,6 +257,7 @@ export default function Roles() {
                                 <TableCell className="text-right">
                                     <div className="flex justify-end gap-2">
 
+                                        {/* EDIT */}
                                         <Button
                                             size="icon"
                                             variant="outline"
@@ -234,6 +266,16 @@ export default function Roles() {
                                             <Pencil className="h-4 w-4" />
                                         </Button>
 
+                                        {/* TOGGLE ACTIVE */}
+                                        <Button
+                                            size="sm"
+                                            variant="outline"
+                                            onClick={() => handleToggle(role.id)}
+                                        >
+                                            Toggle
+                                        </Button>
+
+                                        {/* DELETE */}
                                         <AlertDialog>
                                             <AlertDialogTrigger asChild>
                                                 <Button size="icon" variant="destructive">
@@ -248,7 +290,8 @@ export default function Roles() {
                                                     </AlertDialogTitle>
 
                                                     <AlertDialogDescription>
-                                                        This will permanently delete <strong>{role.name}</strong>
+                                                        This will permanently delete{" "}
+                                                        <strong>{role.name}</strong>
                                                     </AlertDialogDescription>
                                                 </AlertDialogHeader>
 

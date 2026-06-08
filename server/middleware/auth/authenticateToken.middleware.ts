@@ -44,7 +44,8 @@ export const authenticateToken = async (req: Request, res: Response, next: NextF
             return sendResponse(res, HttpStatusCode.UNAUTHORIZED, false, "Tenant-ID header is missing");
         }
 
-        const parsedTenantId = isSystemAdmin ? "" : (tenantId as string);
+        const parsedTenantId = isSystemAdmin ? (tenantId as string) : (tenantId as string);
+
         // const isCompanyDeleted = await systemConfigService.isCompanyDeleted(parsedCompanyId);
         // if (isCompanyDeleted) {
         //     return res.status(401).json({

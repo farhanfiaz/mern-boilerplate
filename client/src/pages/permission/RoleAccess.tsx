@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -14,6 +14,10 @@ import {
     TableHeader,
     TableRow,
 } from "@/components/ui/table";
+import { useAuth } from "@/context/AuthContext";
+import { getSelectedRole } from "@/utils/auth-storage";
+import { allTenantRoles } from "@/services/role.service";
+import { Role } from "@/types/auth.types";
 
 /* ---------------- TYPES ---------------- */
 
@@ -68,19 +72,22 @@ const mockMenus: Menu[] = [
     },
 ];
 
-/* ---------------- MOCK ROLES ---------------- */
-
-const roles = [
-    { id: "admin", name: "Admin" },
-    { id: "user", name: "User" },
-    { id: "moderator", name: "Moderator" },
-];
-
 export default function RoleAccess() {
-    const [selectedRole, setSelectedRole] = useState("admin");
+    const { user } = useAuth();
+    const [selectedRole, setSelectedRole] = useState(getSelectedRole() ?? '');
     const [search, setSearch] = useState("");
+    const [roles, setRoles] = useState<Role[]>([]);
 
     const [menus, setMenus] = useState<Menu[]>(mockMenus);
+
+    const fetchRoles = async () => {
+        const res = await allTenantRoles(user?.user?.tenantId ?? '');
+        setRoles(res);
+    };
+
+    useEffect(() => {
+        fetchRoles();
+    }, [selectedRole]);
 
     /* ---------------- FILTER ---------------- */
 

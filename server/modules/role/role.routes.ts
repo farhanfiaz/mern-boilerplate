@@ -4,6 +4,8 @@ import { RoleController } from "./role.controller";
 const roleRoutes = express.Router();
 const roleController = new RoleController();
 
+roleRoutes.get("/all-tenant-roles", roleController.getAllRole);
+
 roleRoutes.get("/get-all-roles", roleController.getRole);
 
 roleRoutes.get("/get-role-by-id/:id", roleController.getRoleById);

@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -37,67 +37,27 @@ import {
 import { Pencil, Plus, Search, Trash2 } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { getInitials } from "@/utils/utils";
-
-/* ---------------- TYPE ---------------- */
-
-type User = {
-    id: string;
-    image: string;
-    firstName: string;
-    lastName: string;
-    email: string;
-    username?: string;
-    phone?: string;
-    isActive: boolean;
-    isDeleted: boolean;
-    createdAt: string;
-};
-
-/* ---------------- MOCK DATA ---------------- */
-
-const initialUsers: User[] = [
-    {
-        id: "1",
-        image: "https://avatar.iran.liara.run/public/boy?username=JohnDoe",
-        firstName: "John",
-        lastName: "Admin",
-        email: "john@demo.com",
-        username: "john.admin",
-        phone: "+92 300 000000",
-        isActive: true,
-        isDeleted: false,
-        createdAt: new Date().toISOString(),
-    },
-    {
-        id: "2",
-        image: "https://avatar.iran.liara.run/public/girl?username=SarahKhan",
-        firstName: "Sarah",
-        lastName: "Khan",
-        email: "sarah@demo.com",
-        username: "sarah.khan",
-        phone: "",
-        isActive: true,
-        isDeleted: false,
-        createdAt: new Date().toISOString(),
-    },
-];
+import { createUser, deleteUser, getAllUserByTenant, updateRole } from "@/services/user-management.service";
+import { User } from "@/types/user-management/user-management.types";
+import { useToast } from "@/hooks/use-toast";
+import logger from "@/utils/logger";
 
 export default function Users() {
-    const [users, setUsers] = useState<User[]>(initialUsers);
+
+    const { toast } = useToast();
+
+    const [users, setUsers] = useState<User[]>([]);
+    const [loading, setLoading] = useState(false);
 
     const [search, setSearch] = useState("");
     const [page, setPage] = useState(1);
     const pageSize = 5;
-
-    /* ---------------- MODAL STATES ---------------- */
+    const [totalPages, setTotalPages] = useState(1);
 
     const [open, setOpen] = useState(false);
     const [editing, setEditing] = useState(false);
     const [editingId, setEditingId] = useState<string | null>(null);
-
     const [deleteId, setDeleteId] = useState<string | null>(null);
-
-    /* ---------------- FORM ---------------- */
 
     const [form, setForm] = useState({
         firstName: "",
@@ -107,26 +67,37 @@ export default function Users() {
         phone: "",
     });
 
-    /* ---------------- FILTER ---------------- */
+    /* ---------------- FETCH USERS ---------------- */
 
-    const filtered = useMemo(() => {
-        return users.filter((u) => {
-            const text =
-                `${u.firstName} ${u.lastName} ${u.email} ${u.username}`
-                    .toLowerCase();
+    const fetchUsers = async () => {
+        try {
+            setLoading(true);
 
-            return text.includes(search.toLowerCase()) && !u.isDeleted;
-        });
-    }, [users, search]);
+            const response = await getAllUserByTenant({
+                page,
+                limit: pageSize,
+                search,
+                status: "",
+                roleId: "",
+            });
 
-    /* ---------------- PAGINATION ---------------- */
+            setUsers(response.users);
+            setTotalPages(response.totalPages);
+        } catch (error) {
+            logger.error(error);
+            toast({
+                title: "Error",
+                description: "Failed to fetch users",
+                variant: "destructive",
+            });
+        } finally {
+            setLoading(false);
+        }
+    };
 
-    const paginated = useMemo(() => {
-        const start = (page - 1) * pageSize;
-        return filtered.slice(start, start + pageSize);
-    }, [filtered, page]);
-
-    const totalPages = Math.ceil(filtered.length / pageSize);
+    useEffect(() => {
+        fetchUsers();
+    }, [page, search]);
 
     /* ---------------- ADD ---------------- */
 
@@ -162,46 +133,75 @@ export default function Users() {
         setOpen(true);
     };
 
-    /* ---------------- SAVE ---------------- */
+    /* ---------------- CREATE / UPDATE ---------------- */
 
-    const handleSubmit = (e: React.FormEvent) => {
+    const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
 
-        if (editing && editingId) {
-            setUsers((prev) =>
-                prev.map((u) =>
-                    u.id === editingId ? { ...u, ...form } : u
-                )
-            );
-        } else {
-            setUsers((prev) => [
-                ...prev,
-                {
-                    id: crypto.randomUUID(),
+        try {
+            if (editing && editingId) {
+                const existingUser = users.find((u) => u.id === editingId);
+
+                if (!existingUser) return;
+
+                await updateRole(editingId, {
+                    ...existingUser,
                     ...form,
-                    image: `https://avatar.iran.liara.run/public/boy?username=${form.firstName}`,
+                });
+                toast({
+                    title: "Success",
+                    description: "User updated successfully",
+                });
+            } else {
+                await createUser({
+                    id: "",
+                    image: "",
                     isActive: true,
                     isDeleted: false,
                     createdAt: new Date().toISOString(),
-                },
-            ]);
-        }
+                    ...form,
+                });
+                toast({
+                    title: "Success",
+                    description: "User created successfully",
+                });
+            }
 
-        setOpen(false);
+            await fetchUsers();
+            setOpen(false);
+        } catch (error) {
+            logger.error(error);
+            toast({
+                title: "Error",
+                description: "Failed to create/update user",
+                variant: "destructive",
+            });
+        }
     };
 
     /* ---------------- DELETE ---------------- */
 
-    const handleDelete = () => {
+    const handleDelete = async () => {
         if (!deleteId) return;
 
-        setUsers((prev) =>
-            prev.map((u) =>
-                u.id === deleteId ? { ...u, isDeleted: true } : u
-            )
-        );
+        try {
+            await deleteUser(deleteId);
+            toast({
+                title: "Success",
+                description: "User deleted successfully",
+            });
 
-        setDeleteId(null);
+            await fetchUsers();
+
+            setDeleteId(null);
+        } catch (error) {
+            logger.error(error);
+            toast({
+                title: "Error",
+                description: "Failed to delete user",
+                variant: "destructive",
+            });
+        }
     };
 
     /* ---------------- UI ---------------- */
@@ -246,54 +246,66 @@ export default function Users() {
                     </TableHeader>
 
                     <TableBody>
-                        {paginated.map((user) => (
-                            <TableRow key={user.id}>
-                                <TableCell>
-                                    <Avatar className="h-10 w-10 shrink-0 rounded-full ring-2 ring-violet-300/50">
-                                        <AvatarImage
-                                            src={user.image}
-                                            alt={user?.firstName + " " + user?.lastName || "Profile"}
-                                        />
-                                        <AvatarFallback>
-                                            {getInitials(user?.firstName, user?.lastName)}
-                                        </AvatarFallback>
-                                    </Avatar>
+                        {loading ? (
+                            <TableRow>
+                                <TableCell colSpan={6} className="text-center py-6">
+                                    Loading...
                                 </TableCell>
-
-                                <TableCell>
-                                    {user.firstName} {user.lastName}
-                                </TableCell>
-
-                                <TableCell>{user.email}</TableCell>
-
-                                <TableCell>{user.username || "-"}</TableCell>
-
-                                <TableCell>
-                                    <Badge>Active</Badge>
-                                </TableCell>
-
-                                <TableCell className="text-right space-x-2">
-
-                                    <Button
-                                        size="icon"
-                                        variant="outline"
-                                        onClick={() => handleEdit(user)}
-                                    >
-                                        <Pencil className="h-4 w-4" />
-                                    </Button>
-
-                                    <Button
-                                        size="icon"
-                                        variant="destructive"
-                                        onClick={() => setDeleteId(user.id)}
-                                    >
-                                        <Trash2 className="h-4 w-4" />
-                                    </Button>
-
-                                </TableCell>
-
                             </TableRow>
-                        ))}
+                        ) : users?.length === 0 ? (
+                            <TableRow>
+                                <TableCell colSpan={6} className="text-center py-6">
+                                    No users found
+                                </TableCell>
+                            </TableRow>
+                        ) : (
+                            users?.map((user) => (
+                                <TableRow key={user.id}>
+                                    <TableCell>
+                                        <Avatar className="h-10 w-10">
+                                            <AvatarImage src={user.image} />
+                                            <AvatarFallback>
+                                                {getInitials(user.firstName, user.lastName)}
+                                            </AvatarFallback>
+                                        </Avatar>
+                                    </TableCell>
+
+                                    <TableCell>
+                                        {user.firstName} {user.lastName}
+                                    </TableCell>
+
+                                    <TableCell>{user.email}</TableCell>
+
+                                    <TableCell>{user.username || "-"}</TableCell>
+
+                                    <TableCell>
+                                        <Badge
+                                            variant={user.isActive ? "default" : "destructive"}
+                                        >
+                                            {user.isActive ? "Active" : "Inactive"}
+                                        </Badge>
+                                    </TableCell>
+
+                                    <TableCell className="text-right space-x-2">
+                                        <Button
+                                            size="icon"
+                                            variant="outline"
+                                            onClick={() => handleEdit(user)}
+                                        >
+                                            <Pencil className="h-4 w-4" />
+                                        </Button>
+
+                                        <Button
+                                            size="icon"
+                                            variant="destructive"
+                                            onClick={() => setDeleteId(user.id)}
+                                        >
+                                            <Trash2 className="h-4 w-4" />
+                                        </Button>
+                                    </TableCell>
+                                </TableRow>
+                            ))
+                        )}
                     </TableBody>
 
                 </Table>

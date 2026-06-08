@@ -8,9 +8,15 @@ export class RoleController {
     constructor() {
         this.roleService = new RoleService();
     }
+    getAllRole = async (req: Request, res: Response) => {
+        const tenantId = req.query.tenantId;
+        const roles = await this.roleService.getAllRole(String(tenantId));
+        return sendResponse(res as Response, HttpStatusCode.OK, true, "Tenant created successfully", roles);
+    }
     getRole = async (req: Request, res: Response) => {
         const { page = 1, limit = 10, search = '' } = req.query;
-        const roles = await this.roleService.getRole(Number(page), Number(limit), String(search));
+        const tenantId = req.user?.tenantId;
+        const roles = await this.roleService.getRole(Number(page), Number(limit), String(search), String(tenantId));
         return sendResponse(res as Response, HttpStatusCode.OK, true, "Tenant created successfully", roles);
     }
 

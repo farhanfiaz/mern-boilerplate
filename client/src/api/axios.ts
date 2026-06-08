@@ -90,7 +90,7 @@ axiosInstance.interceptors.response.use(
     if (response.data?.iv && response.data?.data) {
       response.data = await decrypt(key, response.data);
     }
-
+    logger.log("response => ", response.data);
     return response.data;
   },
 

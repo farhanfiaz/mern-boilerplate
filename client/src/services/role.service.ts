@@ -49,3 +49,12 @@ export const inActiveRole = async (id: string): Promise<Role> => {
     }
     return response.data;
 }
+
+export const allTenantRoles = async (tenantId: string): Promise<Role[]> => {
+    const response = await http.get<Role[]>(`${ENDPOINTS.ROLE.ALL_TENANT_ROLES}?tenantId=${tenantId}`);
+    if (!response.success) {
+        throw new Error(response.message);
+    }
+    return response.data;
+}
+

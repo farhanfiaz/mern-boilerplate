@@ -1,10 +1,9 @@
-import { useQuery } from "@tanstack/react-query";
-import { getCurrentActiveTenant } from "@/services/menu.service";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Building2 } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 import { useEffect, useState } from "react";
 import logger from "@/utils/logger";
+import { useTenant } from "@/hooks/queries/useTenant";
 
 export function Tenant() {
     const { user, updateTenant } = useAuth();
@@ -18,10 +17,7 @@ export function Tenant() {
 
     logger.info("current tenant", currentTenant);
 
-    const { data: tenant } = useQuery({
-        queryKey: ["current-active-tenant"],
-        queryFn: getCurrentActiveTenant,
-    });
+    const { data: tenant } = useTenant();
 
     const handleTenantChange = (value: string) => {
         logger.info("Tenant changed", value);

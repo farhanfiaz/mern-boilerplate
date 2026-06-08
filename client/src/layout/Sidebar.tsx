@@ -7,14 +7,14 @@ import { Link, Redirect } from "wouter";
 import { useDesktopSidebarOptional } from "./desktop-sidebar-context";
 import { Badge } from "@/components/ui/badge";
 import * as Icons from "lucide-react";
-import { useQuery } from "@tanstack/react-query";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { getUserMenus } from "@/services/menu.service";
+import { useMenu } from "@/hooks/queries/useMenu";
 
 export function Sidebar() {
     const { user, logout } = useAuth();
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
     const desktopSidebar = useDesktopSidebarOptional();
+    const { data: menusData, isLoading, error } = useMenu();
 
     if (!user) {
         return <Redirect to="/login" />;
@@ -38,15 +38,6 @@ export function Sidebar() {
     }, []);
 
     const isDesktopCollapsed = desktopSidebar?.isDesktopCollapsed ?? false;
-
-    const roleId = user?.user?.role?.[0]?.id;
-    const userId = user?.user?.userId || "";
-
-    const { data: menusData } = useQuery({
-        queryKey: ["userMenus", userId, roleId],
-        queryFn: () => getUserMenus(userId, roleId),
-        enabled: !!userId && !!roleId,
-    });
 
     const menus: any[] = Array.isArray(menusData?.menus)
         ? menusData.menus
@@ -138,6 +129,7 @@ export function Sidebar() {
                     compact ? "px-1" : "px-3"
                 )}
             >
+                {isLoading && <p>Loading menus...</p>}
                 <div className={cn("space-y-2")}>
                     {menuGroupLabels?.map((group) => (
                         <div key={group}>

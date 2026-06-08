@@ -13,6 +13,7 @@ import UserRoleAccess from "@/pages/permission/UserRoleAccess";
 import RoleAccess from "@/pages/permission/RoleAccess";
 import Users from "@/pages/auth/Users";
 import { getSelectedRole } from "@/utils/auth-storage";
+import NotFound from "@/pages/NotFound";
 
 export default function AppRoutes() {
   const { user } = useAuth();
@@ -90,6 +91,8 @@ export default function AppRoutes() {
       <Route path="/">
         <Redirect to="/dashboard" />
       </Route>
+
+      <Route component={NotFound} />
     </Switch>
   );
 }

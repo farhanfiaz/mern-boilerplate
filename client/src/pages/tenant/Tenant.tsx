@@ -156,8 +156,9 @@ export default function TenantPage() {
                     form.logo
                 );
                 toast({
-                    title: "Tenant updated",
+                    title: "Success",
                     variant: "success",
+                    description: "Tenant updated successfully"
                 });
             } else {
                 await createTenant(
@@ -168,8 +169,9 @@ export default function TenantPage() {
                     form.logo
                 );
                 toast({
-                    title: "Tenant created",
+                    title: "Success",
                     variant: "success",
+                    description: "Tenant created successfully"
                 });
             }
 
@@ -178,8 +180,9 @@ export default function TenantPage() {
         } catch (err) {
             console.error(err);
             toast({
-                title: "Tenant create/update failed",
+                title: "Error",
                 variant: "destructive",
+                description: "Failed to create or update tenant",
             });
         }
     };
@@ -189,15 +192,17 @@ export default function TenantPage() {
         try {
             await deleteTenant(id);
             toast({
-                title: "Tenant deleted",
+                title: "Success",
                 variant: "success",
+                description: "Tenant deleted successfully"
             });
             await fetchTenants();
         } catch (err) {
             console.error(err);
             toast({
-                title: "Tenant delete failed",
+                title: "Error",
                 variant: "destructive",
+                description: "Failed to delete tenant",
             });
         }
     };
@@ -207,15 +212,17 @@ export default function TenantPage() {
         try {
             await inActiveTenant(id);
             toast({
-                title: isActive ? "Tenant deactivated" : "Tenant activated",
+                title: "Success",
                 variant: "success",
+                description: isActive ? "Tenant deactivated successfully" : "Tenant activated successfully"
             });
             await fetchTenants();
         } catch (err) {
             console.error(err);
             toast({
-                title: isActive ? "Tenant deactivate failed" : "Tenant activate failed",
+                title: "Error",
                 variant: "destructive",
+                description: "Failed to activate or deactivate tenant",
             });
         }
     };

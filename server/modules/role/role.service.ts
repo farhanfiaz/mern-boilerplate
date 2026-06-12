@@ -1,6 +1,6 @@
 import { db } from "@server/db/connection";
 import { roles } from "@server/db/schema";
-import { count, desc, eq, ilike, or } from "drizzle-orm";
+import { count, desc, eq, ilike, or, and } from "drizzle-orm";
 
 export class RoleService {
     constructor() {
@@ -28,7 +28,7 @@ export class RoleService {
             db
                 .select()
                 .from(roles)
-                .where(baseFilter)
+                .where(and(eq(roles.tenantId, tenantId), baseFilter))
                 .orderBy(desc(roles.createdAt))
                 .limit(limit)
                 .offset(offset),
@@ -36,7 +36,7 @@ export class RoleService {
             db
                 .select({ count: count() })
                 .from(roles)
-                .where(baseFilter),
+                .where(and(eq(roles.tenantId, tenantId), baseFilter)),
         ]);
 
         const total = Number(totalResult[0].count);
@@ -53,22 +53,30 @@ export class RoleService {
     }
 
     getRoleById = async (id: string) => {
-        return {};
+        const [role] = await db.select().from(roles).where(eq(roles.id, id));
+        if (!role) {
+            throw new Error("Role not found");
+        }
+        return role;
     }
 
     createRole = async (role: any) => {
-        return [];
+        const [createdRole] = await db.insert(roles).values(role).returning();
+        return createdRole;
     }
 
     updateRole = async (id: string, role: any) => {
-        return [];
+        const [updatedRole] = await db.update(roles).set(role).where(eq(roles.id, id)).returning();
+        return updatedRole;
     }
 
     deleteRole = async (id: string) => {
-        return [];
+        const [deletedRole] = await db.update(roles).set({ isDeleted: true }).where(eq(roles.id, id)).returning();
+        return deletedRole;
     }
 
     inActiveRole = async (id: string) => {
-        return [];
+        const [inactiveRole] = await db.update(roles).set({ isActive: false }).where(eq(roles.id, id)).returning();
+        return inactiveRole;
     }
 }

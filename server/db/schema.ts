@@ -145,6 +145,16 @@ export const roles = pgTable("roles", {
 
   tenantId: varchar("tenant_id", { length: 21 })
     .references(() => tenants.id, { onDelete: "cascade" }),
+
+  isDeleted: boolean("is_deleted")
+    .default(false)
+    .notNull(),
+
+  isActive: boolean("is_active")
+    .default(true)
+    .notNull(),
+
+
 },
   (table) => ({
     uniqueRolePerTenant: uniqueIndex("unique_role_per_tenant").on(

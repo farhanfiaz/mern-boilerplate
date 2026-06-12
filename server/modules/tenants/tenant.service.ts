@@ -2,6 +2,8 @@ import { db } from "@server/db/connection";
 import { tenants, users } from "@server/db/schema";
 import { and, count, desc, eq, ilike, or, sql } from "drizzle-orm";
 import { ActiveTenant } from "./tenant.types";
+import * as fs from 'fs/promises';
+import * as path from 'path';
 
 export class TenantService {
     constructor() {
@@ -130,20 +132,105 @@ export class TenantService {
         };
     }
 
-    async createTenant() {
+    async createTenant(
+        tenant: any
+    ): Promise<any> {
+        const file = tenant.logo;
+        if (file) {
+            const uploadDir = path.join(process.cwd(), 'uploads', 'tenants');
 
+            await fs.mkdir(uploadDir, { recursive: true });
+
+            // Handle data:image/png;base64,... format
+            const matches = file.match(
+                /^data:(image\/[a-zA-Z0-9+.-]+);base64,(.+)$/
+            );
+
+            if (!matches) {
+                throw new Error('Invalid base64 image format');
+            }
+
+            const mimeType = matches[1];
+            const base64Data = matches[2];
+
+            const extension = mimeType.split('/')[1];
+            const fileName = `${Date.now()}.${extension}`;
+            const filePath = path.join(uploadDir, fileName);
+
+            const buffer = Buffer.from(base64Data, 'base64');
+
+            await fs.writeFile(filePath, buffer);
+
+            // Save relative path in DB
+            tenant.logo = `/uploads/tenants/${fileName}`;
+        }
+
+        const [createdTenant] = await db
+            .insert(tenants)
+            .values(tenant)
+            .returning();
+
+        return createdTenant;
     }
 
-    async getTenantById() {
+    async updateTenant(tenantId: string, tenant: any): Promise<any> {
+        const file = tenant.logo;
+        if (file) {
+            const uploadDir = path.join(process.cwd(), 'uploads', 'tenants');
 
+            await fs.mkdir(uploadDir, { recursive: true });
+
+            // Handle data:image/png;base64,... format
+            const matches = file.match(
+                /^data:(image\/[a-zA-Z0-9+.-]+);base64,(.+)$/
+            );
+
+            if (!matches) {
+                throw new Error('Invalid base64 image format');
+            }
+
+            const mimeType = matches[1];
+            const base64Data = matches[2];
+
+            const extension = mimeType.split('/')[1];
+            const fileName = `${Date.now()}.${extension}`;
+            const filePath = path.join(uploadDir, fileName);
+
+            const buffer = Buffer.from(base64Data, 'base64');
+
+            await fs.writeFile(filePath, buffer);
+
+            // Save relative path in DB
+            tenant.logo = `/uploads/tenants/${fileName}`;
+        }
+
+        const [updatedTenant] = await db
+            .update(tenants)
+            .set(tenant)
+            .where(eq(tenants.id, tenantId))
+            .returning();
+
+        return updatedTenant;
     }
 
-    async updateTenant() {
+    async deleteTenant(tenantId: string): Promise<any> {
+        const [deletedTenant] = await db
+            .update(tenants)
+            .set({ isDeleted: true })
+            .where(eq(tenants.id, tenantId))
+            .returning();
 
+        return deletedTenant;
     }
 
-    async deleteTenant() {
+    async inActiveTenant(tenantId: string): Promise<any> {
+        const [inActiveTenant] = await db
+            .update(tenants)
+            .set({ isActive: false })
+            .where(eq(tenants.id, tenantId))
+            .returning();
 
+        return inActiveTenant;
     }
 
 }

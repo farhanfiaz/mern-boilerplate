@@ -31,21 +31,38 @@ export class TenantController {
     createTenant = async (req: Request, res: Response) => {
         const tenant = req.body;
 
-        return sendResponse(res as Response, HttpStatusCode.OK, true, "Tenant created successfully", []);
+        if (!tenant.name || !tenant.slug || !tenant.website) {
+            return sendResponse(res as Response, HttpStatusCode.BAD_REQUEST, false, "Tenant name, slug and type are required", []);
+        }
+
+        const createdTenant = await this.tenantService.createTenant(tenant);
+        return sendResponse(res as Response, HttpStatusCode.OK, true, "Tenant created successfully", createdTenant);
     }
 
     updateTenant = async (req: Request, res: Response) => {
         const { id } = req.params;
+        if (!id) {
+            return sendResponse(res as Response, HttpStatusCode.BAD_REQUEST, false, "Tenant id is required", []);
+        }
         const tenant = req.body;
-        return sendResponse(res as Response, HttpStatusCode.OK, true, "Tenant updated successfully", []);
+        const updatedTenant = await this.tenantService.updateTenant(id as string, tenant);
+        return sendResponse(res as Response, HttpStatusCode.OK, true, "Tenant updated successfully", updatedTenant);
     }
 
     deleteTenant = async (req: Request, res: Response) => {
         const { id } = req.params;
-        return sendResponse(res as Response, HttpStatusCode.OK, true, "Tenant deleted successfully", []);
+        if (!id) {
+            return sendResponse(res as Response, HttpStatusCode.BAD_REQUEST, false, "Tenant id is required", []);
+        }
+        const deletedTenant = await this.tenantService.deleteTenant(id as string);
+        return sendResponse(res as Response, HttpStatusCode.OK, true, "Tenant deleted successfully", deletedTenant);
     }
     inActiveTenant = async (req: Request, res: Response) => {
         const { id } = req.params;
-        return sendResponse(res as Response, HttpStatusCode.OK, true, "Tenant inactivated successfully", []);
+        if (!id) {
+            return sendResponse(res as Response, HttpStatusCode.BAD_REQUEST, false, "Tenant id is required", []);
+        }
+        const inActiveTenant = await this.tenantService.inActiveTenant(id as string);
+        return sendResponse(res as Response, HttpStatusCode.OK, true, "Tenant inactivated successfully", inActiveTenant);
     }
 }

@@ -4,10 +4,13 @@ import { useAuth } from "@/context/AuthContext";
 import { useEffect, useState } from "react";
 import logger from "@/utils/logger";
 import { useTenant } from "@/hooks/queries/useTenant";
+import { useQueryClient } from "@tanstack/react-query";
 
 export function Tenant() {
     const { user, updateTenant } = useAuth();
     const [currentTenant, setCurrentTenant] = useState(user?.user?.tenantId || "");
+
+    const queryClient = useQueryClient();
 
     useEffect(() => {
         if (user?.user?.tenantId) {
@@ -19,7 +22,7 @@ export function Tenant() {
 
     const { data: tenant } = useTenant();
 
-    const handleTenantChange = (value: string) => {
+    const handleTenantChange = async (value: string) => {
         logger.info("Tenant changed", value);
         setCurrentTenant(value);
         updateTenant(value);

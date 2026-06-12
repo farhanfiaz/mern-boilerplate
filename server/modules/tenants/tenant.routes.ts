@@ -1,5 +1,6 @@
 import express from "express";
 import { TenantController } from "./tenant.controller";
+import { authMiddleware } from "@server/middleware";
 
 const tenantRoutes = express.Router();
 const tenantController = new TenantController();
@@ -8,7 +9,7 @@ tenantRoutes.get("/current-active", tenantController.getCurrentActiveTenant);
 
 tenantRoutes.get("/get-all-tenants", tenantController.getTenant);
 
-tenantRoutes.post("/create-tenant", tenantController.createTenant);
+tenantRoutes.post("/create-tenant", authMiddleware.uploadSingleFile, authMiddleware.checkTotalSize(1), tenantController.createTenant);
 
 tenantRoutes.put("/edit-tenant/:id", tenantController.updateTenant);
 

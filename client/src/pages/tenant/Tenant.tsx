@@ -41,6 +41,7 @@ import {
 import { PaginatedTenants, Tenant } from "@/types/tenant/tenant.types";
 import { Pencil, Plus, Search, Trash2 } from "lucide-react";
 import { useEffect, useState } from "react";
+import { tenantSchema } from "@/validations/tenant.validations";
 
 export default function TenantPage() {
     const { toast } = useToast();
@@ -58,6 +59,7 @@ export default function TenantPage() {
     const [open, setOpen] = useState(false);
     const [editing, setEditing] = useState(false);
     const [editingId, setEditingId] = useState<string | null>(null);
+    const [errors, setErrors] = useState<Record<string, string>>({});
 
     /* ---------------- FORM ---------------- */
     const [form, setForm] = useState({
@@ -95,6 +97,7 @@ export default function TenantPage() {
 
     /* ---------------- ADD ---------------- */
     const handleAdd = () => {
+        setErrors({});
         setEditing(false);
         setEditingId(null);
         setForm({
@@ -109,6 +112,7 @@ export default function TenantPage() {
 
     /* ---------------- EDIT ---------------- */
     const handleEdit = (tenant: Tenant) => {
+        setErrors({});
         setEditing(true);
         setEditingId(tenant.id);
 
@@ -126,7 +130,21 @@ export default function TenantPage() {
     /* ---------------- CREATE / UPDATE ---------------- */
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
+        const result = tenantSchema.safeParse(form);
 
+        if (!result.success) {
+            const fieldErrors: Record<string, string> = {};
+
+            result.error.issues.forEach((err) => {
+                const field = err.path[0] as string;
+                fieldErrors[field] = err.message;
+            });
+
+            setErrors(fieldErrors);
+            return;
+        }
+
+        setErrors({});
         try {
             if (editing && editingId) {
                 await editTenant(
@@ -367,6 +385,9 @@ export default function TenantPage() {
                                 setForm({ ...form, name: e.target.value })
                             }
                         />
+                        {errors.name && (
+                            <p className="text-sm text-red-500">{errors.name}</p>
+                        )}
 
                         <Input
                             placeholder="Slug"
@@ -375,6 +396,9 @@ export default function TenantPage() {
                                 setForm({ ...form, slug: e.target.value })
                             }
                         />
+                        {errors.slug && (
+                            <p className="text-sm text-red-500">{errors.slug}</p>
+                        )}
 
                         <Input
                             placeholder="Website"
@@ -383,6 +407,9 @@ export default function TenantPage() {
                                 setForm({ ...form, website: e.target.value })
                             }
                         />
+                        {errors.website && (
+                            <p className="text-sm text-red-500">{errors.website}</p>
+                        )}
 
                         <Input
                             placeholder="Description"
@@ -391,6 +418,9 @@ export default function TenantPage() {
                                 setForm({ ...form, description: e.target.value })
                             }
                         />
+                        {errors.description && (
+                            <p className="text-sm text-red-500">{errors.description}</p>
+                        )}
 
                         <div className="flex justify-end gap-2 pt-2">
                             <Button type="button" variant="outline" onClick={() => setOpen(false)}>

@@ -2,6 +2,8 @@ import { Button } from "@/components/ui/Button";
 import { useDesktopSidebarOptional } from "./desktop-sidebar-context";
 import { Menu } from "lucide-react";
 import { Tenant } from "@/components/shared/tenant";
+import { UserProfileMenu } from "@/components/shared/UserProfileMenu";
+import { NotificationBell } from "@/components/shared/NotificationBell";
 
 export interface HeaderProps {
     onMenuClick?: () => void;
@@ -46,8 +48,8 @@ export function Header({
                 </div>
 
                 <div className="flex items-center gap-2">
-                    {/* <NotificationBell />
-                    <UserProfileMenu /> */}
+                    <NotificationBell />
+                    <UserProfileMenu />
                 </div>
             </div>
         </header>

@@ -9,11 +9,15 @@ const defaultRoles = [
         name: RoleName.Admin,
         description: "Full system access",
         isSystem: false,
+        isDeleted: false,
+        isActive: true,
     },
     {
         name: RoleName.User,
         description: "Default user with limited access",
         isSystem: false,
+        isDeleted: false,
+        isActive: true,
     },
 ];
 
@@ -42,6 +46,8 @@ export async function seedRoles() {
                 description: role.description,
                 isSystem: role.isSystem,
                 tenantId: superTenant.id,
+                isDeleted: role.isDeleted,
+                isActive: role.isActive,
             });
 
             logger.info(`Seeded role: ${role.name}`);

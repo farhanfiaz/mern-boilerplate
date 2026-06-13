@@ -58,5 +58,15 @@ export const defaultMenus = [
         sortOrder: 6,
         isActive: true,
         isAction: false,
-    }
+    },
+    {
+        name: "Multi Role",
+        parentId: null,
+        groupLabel: "Main",
+        icon: "Shield",
+        url: "/multiple-role",
+        sortOrder: 2,
+        isActive: true,
+        isAction: false,
+    },
 ];

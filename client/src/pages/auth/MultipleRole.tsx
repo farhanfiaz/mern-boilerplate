@@ -10,6 +10,7 @@ import {
     Shield,
     LogIn,
 } from "lucide-react";
+import { publishEvent } from "@/lib/appEvents";
 
 export default function MultipleRole() {
     const { user } = useAuth();
@@ -37,6 +38,8 @@ export default function MultipleRole() {
 
         localStorage.setItem("selectedRole", selectedRole);
         setLocation("/dashboard");
+
+        publishEvent({ type: "ROLE_SELECTED", roleId: selectedRole });
     };
 
     return (

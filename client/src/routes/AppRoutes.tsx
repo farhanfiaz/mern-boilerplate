@@ -39,7 +39,7 @@ export default function AppRoutes() {
       </Route>
 
       <Route path="/multiple-role">
-        <ProtectedRoute>
+        <ProtectedRoute menuByPass={!selectedRole}>
           <MultipleRole />
         </ProtectedRoute>
       </Route>

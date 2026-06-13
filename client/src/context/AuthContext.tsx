@@ -25,6 +25,7 @@ import {
 } from "@/utils/auth-storage";
 
 import { initSessionKey } from "@/crypto/session";
+import { publishEvent } from "@/lib/appEvents";
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
@@ -65,6 +66,7 @@ export const AuthProvider = ({ children }: Props) => {
       }
       setUser(resp);
       await saveStoredAuth(resp);
+      publishEvent({ type: "LOGIN", userId: resp?.user?.userId! });
     } catch (err: any) {
       toast({
         title: "Invalid credentials",
@@ -83,6 +85,7 @@ export const AuthProvider = ({ children }: Props) => {
 
       setUser(resp);
       await saveStoredAuth(resp);
+      publishEvent({ type: "LOGIN", userId: resp?.user?.userId! });
     } catch (err: any) {
       toast({
         title: "Registration failed",
@@ -97,6 +100,7 @@ export const AuthProvider = ({ children }: Props) => {
   const logout = () => {
     setUser(null);
     clearStoredAuth();
+    publishEvent({ type: "LOGOUT" });
   };
 
   const updateTenant = async (tenantId: string) => {
@@ -110,9 +114,10 @@ export const AuthProvider = ({ children }: Props) => {
           tenantId,
         },
       };
-
-      // persist encrypted update (fire-and-forget safe)
-      saveStoredAuth(updated).catch(logger.error);
+      logger.info("updated tenant: ", updated);
+      saveStoredAuth(updated).then(() => {
+        publishEvent({ type: "COMPANY_CHANGED", companyId: tenantId });
+      }).catch(logger.error);
 
       return updated;
     });

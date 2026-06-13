@@ -9,6 +9,8 @@ const defaultRoles = [
         name: RoleName.SuperAdmin,
         description: "Super access to all system",
         isSystem: true,
+        isDeleted: false,
+        isActive: true,
     }
 ];
 
@@ -27,6 +29,8 @@ export async function seedSuperAdminRoles() {
                 name: role.name,
                 description: role.description,
                 isSystem: role.isSystem,
+                isDeleted: role.isDeleted,
+                isActive: role.isActive,
             });
 
             logger.info(`Role seeded: ${role.name}`);

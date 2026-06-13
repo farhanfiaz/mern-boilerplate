@@ -3,18 +3,23 @@ import { ReactNode } from "react";
 import { useAuth } from "../context/AuthContext";
 import { useMenu } from "@/hooks/queries/useMenu";
 import { useLocation } from "wouter";
+import logger from "@/utils/logger";
 
 interface Props {
     children: ReactNode;
+    menuByPass?: boolean;
 }
 
-export default function ProtectedRoute({ children }: Props) {
+export default function ProtectedRoute({ children, menuByPass = false }: Props) {
     const { user } = useAuth();
     const [location] = useLocation();
     const { data, isLoading, error } = useMenu();
 
     if (!user) {
         return <Navigate to="/login" replace />;
+    }
+    if (menuByPass) {
+        return <>{children}</>;
     }
 
     if (isLoading) {
@@ -31,7 +36,7 @@ export default function ProtectedRoute({ children }: Props) {
             </div>
         </div>
     }
-
+    logger.info("menu", data?.menus);
     if (data?.menus && data?.menus?.some((item: any) => item.url === location)) {
         return <>{children}</>;
     }

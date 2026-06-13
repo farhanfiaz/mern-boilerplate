@@ -7,19 +7,18 @@ import { useTenant } from "@/hooks/queries/useTenant";
 
 export function Tenant() {
     const { user, updateTenant } = useAuth();
+
     const [currentTenant, setCurrentTenant] = useState(user?.user?.tenantId || "");
     const { data: tenant } = useTenant();
 
     useEffect(() => {
+        logger.info("user ", user);
         if (user?.user?.tenantId) {
             setCurrentTenant(user.user.tenantId);
         }
-    }, [user?.user?.tenantId]);
-
-    logger.info("current tenant", currentTenant);
+    }, [user]);
 
     const handleTenantChange = async (value: string) => {
-        logger.info("Tenant changed", value);
         setCurrentTenant(value);
         updateTenant(value);
     };

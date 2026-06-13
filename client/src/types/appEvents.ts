@@ -9,7 +9,12 @@ export type AppEvent =
     | {
         type: "COMPANY_CHANGED";
         companyId: string;
-    } | {
+    }
+    | {
         type: "ROLE_SELECTED";
         roleId: string;
+    }
+    | {
+        type: "USER_UPDATED";
+        userId: string;
     };

@@ -48,7 +48,7 @@ axiosInstance.interceptors.request.use(async (config) => {
   const apiKey = import.meta.env.VITE_API_KEYS;
 
   const userObj = await getStoredAuth();
-
+  logger.info("userObj => ", userObj);
   if (userObj?.token) {
     config.headers.Authorization = `Bearer ${userObj.token}`;
   }

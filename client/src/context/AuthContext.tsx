@@ -26,6 +26,7 @@ import {
 
 import { initSessionKey } from "@/crypto/session";
 import { publishEvent } from "@/lib/appEvents";
+import { useAppEvents } from "@/hooks/useAppEvents";
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
@@ -36,6 +37,14 @@ interface Props {
 export const AuthProvider = ({ children }: Props) => {
   const [user, setUser] = useState<AuthResponse | null>(null);
   const { toast } = useToast();
+  useAppEvents(async (event) => {
+    if (event.type === "USER_UPDATED") {
+      const storedUser = await getStoredAuth();
+      logger.info("user updated in context", storedUser);
+      setUser(storedUser);
+      publishEvent({ type: "COMPANY_CHANGED", companyId: storedUser?.user?.tenantId! });
+    }
+  });
 
   useEffect(() => {
     const initialize = async () => {
@@ -104,23 +113,22 @@ export const AuthProvider = ({ children }: Props) => {
   };
 
   const updateTenant = async (tenantId: string) => {
-    setUser((prev) => {
-      if (!prev) return null;
+    if (!user) return;
 
-      const updated: AuthResponse = {
-        ...prev,
-        user: {
-          ...prev.user,
-          tenantId,
-        },
-      };
-      logger.info("updated tenant: ", updated);
-      saveStoredAuth(updated).then(() => {
-        publishEvent({ type: "COMPANY_CHANGED", companyId: tenantId });
-      }).catch(logger.error);
+    const updated = {
+      ...user,
+      user: {
+        ...user.user,
+        tenantId,
+      },
+    };
 
-      return updated;
-    });
+    setUser(updated);
+
+    await saveStoredAuth(updated);
+
+    publishEvent({ type: "USER_UPDATED", userId: updated?.user?.userId! });
+
   };
 
   return (

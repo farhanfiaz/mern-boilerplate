@@ -87,7 +87,7 @@ export default function RoleAccess() {
 
     useEffect(() => {
         fetchRoles();
-    }, [selectedRole]);
+    }, [selectedRole, user?.user?.tenantId]);
 
     /* ---------------- FILTER ---------------- */
 

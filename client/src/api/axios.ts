@@ -14,6 +14,7 @@ import {
 } from "@/crypto/aes";
 
 import { getSessionKey } from "@/crypto/session";
+import { applyAuthHeaders } from "@/api/applyAuthHeaders";
 
 const axiosInstance = axios.create({
   baseURL: import.meta.env.VITE_API_URL,
@@ -49,21 +50,7 @@ axiosInstance.interceptors.request.use(async (config) => {
 
   const userObj = await getStoredAuth();
   logger.info("userObj => ", userObj);
-  if (userObj?.token) {
-    config.headers.Authorization = `Bearer ${userObj.token}`;
-  }
-
-  if (apiKey) {
-    config.headers["x-api-key"] = apiKey;
-  }
-
-  if (userObj?.user?.tenantId) {
-    config.headers["tenant-id"] = userObj.user.tenantId;
-  }
-
-  if (userObj?.user?.userId) {
-    config.headers["user-id"] = userObj.user.userId;
-  }
+  applyAuthHeaders(config, userObj, apiKey);
 
   // encrypt payload
   if (config.data) {

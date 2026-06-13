@@ -1,3 +1,4 @@
+import { useCallback } from 'react'
 import { StrictMode } from 'react'
 import './App.css'
 import { QueryProvider } from './providers/query-provider'
@@ -8,11 +9,13 @@ import { Toaster } from './components/ui/toaster'
 import { useAppEvents } from './hooks/useAppEvents';
 import logger from './utils/logger'
 import { queryClient } from './providers/query-provider';
+import { TENANT_SCOPED_QUERY_KEY } from './constants/queryKeys';
+import type { AppEvent } from './types/appEvents';
 
 
 function App() {
 
-  useAppEvents((event) => {
+  const handleAppEvent = useCallback((event: AppEvent) => {
     switch (event.type) {
       case "LOGIN":
         logger.info("login sync across tabs", event.userId);
@@ -29,7 +32,7 @@ function App() {
       case "COMPANY_CHANGED":
         logger.info("company changed:", event.companyId);
 
-        queryClient.refetchQueries({ type: "active" });
+        queryClient.invalidateQueries({ queryKey: [TENANT_SCOPED_QUERY_KEY] });
         break;
 
       case "ROLE_SELECTED":
@@ -38,7 +41,9 @@ function App() {
         window.location.href = "/dashboard";
         break;
     }
-  });
+  }, []);
+
+  useAppEvents(handleAppEvent);
 
   return (
     <StrictMode>

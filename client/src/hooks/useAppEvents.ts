@@ -1,12 +1,17 @@
-// hooks/useAppEvents.ts
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import { appChannel } from "@/lib/broadcastChannel";
 import type { AppEvent } from "@/types/appEvents";
 
 export function useAppEvents(onEvent: (event: AppEvent) => void) {
+    const onEventRef = useRef(onEvent);
+
+    useEffect(() => {
+        onEventRef.current = onEvent;
+    }, [onEvent]);
+
     useEffect(() => {
         const handler = (event: MessageEvent<AppEvent>) => {
-            onEvent(event.data);
+            onEventRef.current(event.data);
         };
 
         appChannel.addEventListener("message", handler);
@@ -14,5 +19,5 @@ export function useAppEvents(onEvent: (event: AppEvent) => void) {
         return () => {
             appChannel.removeEventListener("message", handler);
         };
-    }, [onEvent]);
+    }, []);
 }

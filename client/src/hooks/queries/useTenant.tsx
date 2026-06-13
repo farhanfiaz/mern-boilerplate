@@ -1,12 +1,15 @@
 import { useAuth } from "@/context/AuthContext";
 import { useQuery } from "@tanstack/react-query";
 import { getCurrentActiveTenant } from "@/services/menu.service";
+import { queryKeys } from "@/constants/queryKeys";
 
 export const useTenant = () => {
     const { user } = useAuth();
+    const tenantId = user?.user?.tenantId ?? "";
+
     return useQuery({
-        queryKey: ["current-active-tenant"],
+        queryKey: queryKeys.currentActiveTenant(tenantId),
         queryFn: getCurrentActiveTenant,
-        enabled: !!user?.user?.tenantId,
+        enabled: !!tenantId,
     });
 };

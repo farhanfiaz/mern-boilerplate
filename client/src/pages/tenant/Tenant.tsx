@@ -28,38 +28,34 @@ import {
     TableHeader,
     TableRow,
 } from "@/components/ui/table";
-import { useToast } from "@/hooks/use-toast";
-
-import {
-    getAllTenants,
-    createTenant,
-    editTenant,
-    deleteTenant,
-    inActiveTenant,
-} from "@/services/tenant.service";
 
 import { PaginatedTenants, Tenant } from "@/types/tenant/tenant.types";
-import { Pencil, Plus, Search, Trash2 } from "lucide-react";
-import { useEffect, useState } from "react";
+import { Loader2, Pencil, Plus, Search, Trash2 } from "lucide-react";
+import { useState } from "react";
 import { tenantSchema } from "@/validations/tenant.validations";
+import { useAllTenants } from "@/hooks/queries/useTenant";
+import { useCreateTenant, useDeleteTenant, useEditTenant, useInActivateTenant } from "@/hooks/mutations/useTenantMutations";
 
 export default function TenantPage() {
-    const { toast } = useToast();
-    /* ---------------- STATE ---------------- */
-    const [data, setData] = useState<PaginatedTenants | null>(null);
-
-    const [search, setSearch] = useState("");
-    const [page, setPage] = useState(1);
-    const pageSize = 5;
-
-    const tenants = data?.data ?? [];
-    const pagination = data?.pagination;
-
     /* ---------------- MODAL ---------------- */
     const [open, setOpen] = useState(false);
     const [editing, setEditing] = useState(false);
     const [editingId, setEditingId] = useState<string | null>(null);
     const [errors, setErrors] = useState<Record<string, string>>({});
+
+    const [search, setSearch] = useState("");
+    const [page, setPage] = useState(1);
+    const pageSize = 5;
+
+    const { data, isLoading, error, refetch: fetchAllTenants } = useAllTenants(page, pageSize, search);
+
+    const tenants = data?.data ?? [];
+    const pagination = data?.pagination;
+
+    const createTenantMutation = useCreateTenant();
+    const editTenantMutation = useEditTenant();
+    const deleteTenantMutation = useDeleteTenant();
+    const inActiveTenantMutation = useInActivateTenant();
 
     /* ---------------- FORM ---------------- */
     const [form, setForm] = useState({
@@ -69,16 +65,6 @@ export default function TenantPage() {
         website: "",
         logo: "",
     });
-
-    /* ---------------- FETCH ---------------- */
-    const fetchTenants = async () => {
-        const res = await getAllTenants(page, pageSize, search);
-        setData(res);
-    };
-
-    useEffect(() => {
-        fetchTenants();
-    }, [page, search]);
 
     /* ---------------- FILE UPLOAD ---------------- */
     const handleLogoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -147,83 +133,47 @@ export default function TenantPage() {
         setErrors({});
         try {
             if (editing && editingId) {
-                await editTenant(
-                    editingId,
-                    form.name,
-                    form.slug,
-                    form.description,
-                    form.website,
-                    form.logo
-                );
-                toast({
-                    title: "Success",
-                    variant: "success",
-                    description: "Tenant updated successfully"
+                await editTenantMutation.mutateAsync({
+                    id: editingId,
+                    name: form.name,
+                    slug: form.slug,
+                    description: form.description,
+                    website: form.website,
+                    logo: form.logo,
                 });
+                setEditing(false);
+                setEditingId(null);
             } else {
-                await createTenant(
-                    form.name,
-                    form.slug,
-                    form.description,
-                    form.website,
-                    form.logo
-                );
-                toast({
-                    title: "Success",
-                    variant: "success",
-                    description: "Tenant created successfully"
+                await createTenantMutation.mutateAsync({
+                    name: form.name,
+                    slug: form.slug,
+                    description: form.description,
+                    website: form.website,
+                    logo: form.logo,
                 });
             }
 
             setOpen(false);
-            await fetchTenants();
         } catch (err) {
             console.error(err);
-            toast({
-                title: "Error",
-                variant: "destructive",
-                description: "Failed to create or update tenant",
-            });
         }
     };
 
     /* ---------------- DELETE ---------------- */
     const handleDelete = async (id: string) => {
         try {
-            await deleteTenant(id);
-            toast({
-                title: "Success",
-                variant: "success",
-                description: "Tenant deleted successfully"
-            });
-            await fetchTenants();
+            await deleteTenantMutation.mutateAsync(id);
         } catch (err) {
             console.error(err);
-            toast({
-                title: "Error",
-                variant: "destructive",
-                description: "Failed to delete tenant",
-            });
         }
     };
 
     /* ---------------- ACTIVE / INACTIVE ---------------- */
     const handleToggleActive = async (id: string, isActive: boolean) => {
         try {
-            await inActiveTenant(id);
-            toast({
-                title: "Success",
-                variant: "success",
-                description: isActive ? "Tenant deactivated successfully" : "Tenant activated successfully"
-            });
-            await fetchTenants();
+            await inActiveTenantMutation.mutateAsync(id);
         } catch (err) {
             console.error(err);
-            toast({
-                title: "Error",
-                variant: "destructive",
-                description: "Failed to activate or deactivate tenant",
-            });
         }
     };
 
@@ -270,6 +220,13 @@ export default function TenantPage() {
                     </TableHeader>
 
                     <TableBody>
+                        {isLoading && (
+                            <TableRow>
+                                <TableCell colSpan={6} className="h-24 text-center">
+                                    Loading...
+                                </TableCell>
+                            </TableRow>
+                        )}
                         {tenants.map((tenant) => (
                             <TableRow key={tenant.id}>
 
@@ -307,18 +264,26 @@ export default function TenantPage() {
                                         <Button
                                             size="icon"
                                             variant="outline"
+                                            disabled={editTenantMutation.isPending || inActiveTenantMutation.isPending}
                                             onClick={() => handleEdit(tenant)}
                                         >
                                             <Pencil className="h-4 w-4" />
+                                            {editTenantMutation.isPending && (
+                                                <Loader2 className="ml-2 h-4 w-4 animate-spin" />
+                                            )}
                                         </Button>
 
                                         {/* TOGGLE ACTIVE */}
                                         <Button
                                             size="sm"
                                             variant="outline"
+                                            disabled={editTenantMutation.isPending || inActiveTenantMutation.isPending}
                                             onClick={() => handleToggleActive(tenant.id, tenant.isActive)}
                                         >
                                             {tenant.isActive ? "Deactivate" : "Activate"}
+                                            {(inActiveTenantMutation.isPending) && (
+                                                <Loader2 className="ml-2 h-4 w-4 animate-spin" />
+                                            )}
                                         </Button>
 
                                         {/* DELETE */}
@@ -434,8 +399,13 @@ export default function TenantPage() {
                                 Cancel
                             </Button>
 
-                            <Button type="submit">
+                            <Button type="submit" disabled={editing ? editTenantMutation.isPending : createTenantMutation.isPending}>
                                 {editing ? "Update" : "Create"}
+                                {editing ? editTenantMutation.isPending && (
+                                    <Loader2 className="ml-2 h-4 w-4 animate-spin" />
+                                ) : createTenantMutation.isPending && (
+                                    <Loader2 className="ml-2 h-4 w-4 animate-spin" />
+                                )}
                             </Button>
                         </div>
 

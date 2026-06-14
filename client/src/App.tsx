@@ -46,16 +46,16 @@ function App() {
   useAppEvents(handleAppEvent);
 
   return (
-    <StrictMode>
-      <QueryProvider>
-        <AuthProvider>
-          <BrowserRouter>
-            <Toaster />
-            <AppRoutes />
-          </BrowserRouter>
-        </AuthProvider>
-      </QueryProvider>
-    </StrictMode>
+    // <StrictMode>
+    <QueryProvider>
+      <AuthProvider>
+        {/* <BrowserRouter> */}
+        <Toaster />
+        <AppRoutes />
+        {/* </BrowserRouter> */}
+      </AuthProvider>
+    </QueryProvider>
+    // </StrictMode>
   )
 }
 

@@ -9,9 +9,16 @@ import { ReactNode } from "react";
 export const queryClient = new QueryClient({
     defaultOptions: {
         queries: {
-            retry: 1,
-            staleTime: 1000 * 60 * 5,
+            //queryFn: getQueryFn({ on401: "throw" }),
+            refetchInterval: false,
             refetchOnWindowFocus: false,
+            staleTime: 5 * 60 * 1000, // 5 minutes
+            gcTime: 10 * 60 * 1000, // 10 minutes
+            retry: 2,
+            retryDelay: (attemptIndex: number) => Math.min(1000 * 2 ** attemptIndex, 30000),
+        },
+        mutations: {
+            retry: 1,
         },
     },
 });

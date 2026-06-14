@@ -2,8 +2,7 @@ import { Navigate } from "react-router-dom";
 import { ReactNode } from "react";
 import { useAuth } from "../context/AuthContext";
 import { useMenu } from "@/hooks/queries/useMenu";
-import { useLocation } from "wouter";
-import logger from "@/utils/logger";
+import { Redirect, useLocation } from "wouter";
 
 interface Props {
     children: ReactNode;
@@ -16,7 +15,7 @@ export default function ProtectedRoute({ children, menuByPass = false }: Props) 
     const { data, isLoading, error } = useMenu();
 
     if (!user) {
-        return <Navigate to="/login" replace />;
+        return <Redirect to="/login" replace />;
     }
     if (menuByPass) {
         return <>{children}</>;
@@ -36,7 +35,7 @@ export default function ProtectedRoute({ children, menuByPass = false }: Props) 
             </div>
         </div>
     }
-    logger.info("menu", data?.menus);
+
     if (data?.menus && data?.menus?.some((item: any) => item.url === location)) {
         return <>{children}</>;
     }

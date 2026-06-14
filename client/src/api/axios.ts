@@ -49,7 +49,7 @@ axiosInstance.interceptors.request.use(async (config) => {
   const apiKey = import.meta.env.VITE_API_KEYS;
 
   const userObj = await getStoredAuth();
-  logger.info("userObj => ", userObj);
+  logger.info("Interceptors request userObj => ", userObj);
   applyAuthHeaders(config, userObj, apiKey);
 
   // encrypt payload
@@ -77,7 +77,7 @@ axiosInstance.interceptors.response.use(
     if (response.data?.iv && response.data?.data) {
       response.data = await decrypt(key, response.data);
     }
-    logger.log("response => ", response.data);
+    logger.log("Interceptor response data => ", response.data);
     return response.data;
   },
 

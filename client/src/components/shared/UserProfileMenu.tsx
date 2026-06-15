@@ -46,6 +46,9 @@ export function UserProfileMenu() {
                                         : undefined
                                 }
                                 alt={`${user?.user?.firstName} ${user?.user?.lastName}`.trim() || "Profile"}
+                                onError={(e) => {
+                                    e.currentTarget.src = "";
+                                }}
                             />
                             <AvatarFallback className="bg-violet-700 text-white text-sm">
                                 {getInitials(user?.user?.firstName || '', user?.user?.lastName || '')}

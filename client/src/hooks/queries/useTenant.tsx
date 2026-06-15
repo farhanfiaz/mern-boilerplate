@@ -17,7 +17,14 @@ export const useTenant = () => {
 
 export const useAllTenants = (page: number, pageSize: number, search: string) => {
     return useQuery({
-        queryKey: [...queryKeys.allTenants, page, pageSize, search],
+        queryKey: queryKeys.allTenants(page, pageSize, search),
         queryFn: () => getAllTenants(page, pageSize, search),
+
+        staleTime: 1000 * 30,
+        gcTime: 1000 * 60,
+
+        refetchOnMount: false,
+        refetchOnWindowFocus: false,
+        refetchOnReconnect: false,
     });
 };

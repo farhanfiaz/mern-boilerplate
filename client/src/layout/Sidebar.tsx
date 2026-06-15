@@ -105,6 +105,9 @@ export function Sidebar() {
                         <AvatarImage
                             src={`/api/users/${user?.user?.userId}/photo`}
                             alt={user?.user?.name || "Profile"}
+                            onError={(e) => {
+                                e.currentTarget.src = "";
+                            }}
                         />
                         <AvatarFallback>
                             {getInitials(user?.user?.firstName, user?.user?.lastName)}

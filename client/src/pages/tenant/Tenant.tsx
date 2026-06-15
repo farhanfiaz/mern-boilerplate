@@ -47,7 +47,7 @@ export default function TenantPage() {
     const [page, setPage] = useState(1);
     const pageSize = 5;
 
-    const { data, isLoading, error, refetch: fetchAllTenants } = useAllTenants(page, pageSize, search);
+    const { data, isLoading, error } = useAllTenants(page, pageSize, search);
 
     const tenants = data?.data ?? [];
     const pagination = data?.pagination;

@@ -55,6 +55,33 @@ app.use(
   express.static(path.join(process.cwd(), "uploads"))
 );
 
+// 👉 ADD THIS BEFORE /api middleware
+app.get("/api/users/:id/photo", async (req, res) => {
+  const fs = await import("fs");
+  const path = await import("path");
+
+  const userId = req.params.id;
+
+  const photoPath = path.join(
+    process.cwd(),
+    "uploads/users",
+    `${userId}.png`
+  );
+
+  const defaultImage = path.join(
+    process.cwd(),
+    "uploads/tenants/1781274373995.jpeg"
+  );
+
+  const finalPath = fs.existsSync(photoPath)
+    ? photoPath
+    : defaultImage;
+
+  res.setHeader("Cache-Control", "public, max-age=31536000, immutable");
+
+  return res.sendFile(finalPath);
+});
+
 // ---------------- ROUTES ----------------
 app.get(
   "/api/health",
@@ -73,7 +100,7 @@ app.use(
   router
 );
 
- //app.use(authMiddleware.encryptResponse);
+//app.use(authMiddleware.encryptResponse);
 // ---------------- ERROR HANDLER ----------------
 app.use(authMiddleware.errorMiddleware);
 

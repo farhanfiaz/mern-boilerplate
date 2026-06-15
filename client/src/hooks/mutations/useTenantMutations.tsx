@@ -1,14 +1,17 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
 import { createTenant as createTenantService, deleteTenant, editTenant, inActiveTenant } from "@/services/tenant.service";
-import { queryKeys, TENANT_SCOPED_QUERY_KEY } from "@/constants/queryKeys";
+import { ALL_TENANTS_QUERY_KEY, queryKeys, TENANT_SCOPED_QUERY_KEY } from "@/constants/queryKeys";
 
 export const useCreateTenant = () => {
     const queryClient = useQueryClient();
     const { toast } = useToast();
     return useMutation({
         mutationFn: ({ name, slug, description, website, logo }: { name: string, slug: string, description: string, website: string, logo: string }) => createTenantService(name, slug, description, website, logo),
-        onSuccess: () => {
+        onSuccess: async () => {
+            await queryClient.invalidateQueries({
+                queryKey: [ALL_TENANTS_QUERY_KEY],
+              });
             toast({
                 title: "Success",
                 variant: "success",
@@ -30,7 +33,10 @@ export const useEditTenant = () => {
     const { toast } = useToast();
     return useMutation({
         mutationFn: ({ id, name, slug, description, website, logo }: { id: string, name: string, slug: string, description: string, website: string, logo: string }) => editTenant(id, name, slug, description, website, logo),
-        onSuccess: () => {
+        onSuccess: async () => {
+            await queryClient.invalidateQueries({
+                queryKey: [ALL_TENANTS_QUERY_KEY],
+              });
             toast({
                 title: "Success",
                 variant: "success",
@@ -52,7 +58,10 @@ export const useDeleteTenant = () => {
     const { toast } = useToast();
     return useMutation({
         mutationFn: (id: string) => deleteTenant(id),
-        onSuccess: () => {
+        onSuccess: async () => {
+            await queryClient.invalidateQueries({
+                queryKey: [ALL_TENANTS_QUERY_KEY],
+              });
             toast({
                 title: "Success",
                 variant: "success",
@@ -74,7 +83,10 @@ export const useInActivateTenant = () => {
     const { toast } = useToast();
     return useMutation({
         mutationFn: (id: string) => inActiveTenant(id),
-        onSuccess: () => {
+        onSuccess: async () => {
+            await queryClient.invalidateQueries({
+                queryKey: [ALL_TENANTS_QUERY_KEY],
+              });
             toast({
                 title: "Success",
                 variant: "success",

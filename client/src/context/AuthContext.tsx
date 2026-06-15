@@ -3,6 +3,7 @@ import {
   useCallback,
   useContext,
   useEffect,
+  useMemo,
   useState,
   ReactNode,
 } from "react";
@@ -44,8 +45,16 @@ export const AuthProvider = ({ children }: Props) => {
   const handleAppEvent = useCallback(async (event: AppEvent) => {
     if (event.type === "USER_UPDATED") {
       const storedUser = await getStoredAuth();
-      logger.info("user updated in context", storedUser);
-      setUser(storedUser);
+
+      setUser((prev) => {
+        if (
+          JSON.stringify(prev) === JSON.stringify(storedUser)
+        ) {
+          return prev;
+        }
+
+        return storedUser;
+      });
     }
   }, []);
 
@@ -54,7 +63,6 @@ export const AuthProvider = ({ children }: Props) => {
   useEffect(() => {
     const initialize = async () => {
       try {
-        // ensure crypto key is ready BEFORE decrypting
         await initSessionKey();
 
         const storedUser = await getStoredAuth();
@@ -71,73 +79,100 @@ export const AuthProvider = ({ children }: Props) => {
     initialize();
   }, []);
 
-  const login = async (userData: User) => {
-    try {
-      const resp = await authLogin(userData);
+  const login = useCallback(
+    async (userData: User) => {
+      try {
+        const resp = await authLogin(userData);
 
-      if (resp.user?.role?.length === 1) {
-        setSelectedRole(resp.user?.role?.at(0)?.id!);
+        if (resp.user?.role?.length === 1) {
+          setSelectedRole(resp.user.role[0].id);
+        }
+
+        setUser(resp);
+
+        await saveStoredAuth(resp);
+
+        publishEvent({
+          type: "LOGIN",
+          userId: resp.user.userId,
+        });
+      } catch (err: any) {
+        toast({
+          title: "Invalid credentials",
+          description: err?.message ?? "Login failed",
+          variant: "destructive",
+        });
+
+        logger.error(err);
+        throw err;
       }
-      setUser(resp);
-      await saveStoredAuth(resp);
-      publishEvent({ type: "LOGIN", userId: resp?.user?.userId! });
-    } catch (err: any) {
-      toast({
-        title: "Invalid credentials",
-        description: err?.message ?? "Login failed",
-        variant: "destructive",
-      });
+    },
+    [toast]
+  );
 
-      logger.error(err);
-      throw err;
-    }
-  };
+  const register = useCallback(
+    async (userData: RegisterUser) => {
+      try {
+        const resp = await authRegister(userData);
 
-  const register = async (userData: RegisterUser) => {
-    try {
-      const resp = await authRegister(userData);
+        setUser(resp);
 
-      setUser(resp);
-      await saveStoredAuth(resp);
-      publishEvent({ type: "LOGIN", userId: resp?.user?.userId! });
-    } catch (err: any) {
-      toast({
-        title: "Registration failed",
-        description: err?.message ?? "Registration failed",
-        variant: "destructive",
-      });
+        await saveStoredAuth(resp);
 
-      logger.error(err);
-    }
-  };
+        publishEvent({
+          type: "LOGIN",
+          userId: resp.user.userId,
+        });
+      } catch (err: any) {
+        toast({
+          title: "Registration failed",
+          description: err?.message ?? "Registration failed",
+          variant: "destructive",
+        });
 
-  const logout = () => {
+        logger.error(err);
+      }
+    },
+    [toast]
+  );
+
+  const logout = useCallback(() => {
     setUser(null);
+    
     clearStoredAuth();
-    publishEvent({ type: "LOGOUT" });
-  };
 
-  const updateTenant = async (tenantId: string) => {
-    if (!user) return;
-
-    const updated = await persistTenantChange(user, tenantId, {
-      saveStoredAuth,
-      publishEvent,
+    publishEvent({
+      type: "LOGOUT",
     });
+  }, []);
 
-    setUser(updated);
-  };
+  const updateTenant = useCallback(
+    async (tenantId: string) => {
+      if (!user) return;
+
+      const updated = await persistTenantChange(user, tenantId, {
+        saveStoredAuth,
+        publishEvent,
+      });
+
+      setUser(updated);
+    },
+    [user]
+  );
+
+  const contextValue = useMemo(
+    () => ({
+      user,
+      login,
+      logout,
+      register,
+      updateTenant,
+    }),
+    [user, login, logout, register, updateTenant]
+  );
 
   return (
-    <AuthContext.Provider
-      value={{
-        user,
-        login,
-        logout,
-        register,
-        updateTenant,
-      }}
-    >
+    <AuthContext.Provider value={contextValue}>
       {children}
     </AuthContext.Provider>
   );

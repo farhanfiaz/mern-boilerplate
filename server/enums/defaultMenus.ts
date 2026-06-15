@@ -61,7 +61,7 @@ export const defaultMenus = [
     },
     {
         name: "Multi Role",
-        parentId: null,
+        parentId: "Users",
         groupLabel: "Main",
         icon: "Shield",
         url: "/multiple-role",

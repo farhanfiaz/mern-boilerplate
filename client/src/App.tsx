@@ -19,6 +19,7 @@ function App() {
     switch (event.type) {
       case "LOGIN":
         logger.info("login sync across tabs", event.userId);
+        queryClient.clear();
         window.location.href = "/dashboard";
         break;
 

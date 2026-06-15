@@ -11,20 +11,15 @@ export const useTenant = () => {
     return useQuery({
         queryKey: queryKeys.currentActiveTenant(tenantId),
         queryFn: getCurrentActiveTenant,
-        enabled: !!tenantId,
+        enabled: !!user?.user?.userId
     });
 };
 
 export const useAllTenants = (page: number, pageSize: number, search: string) => {
+    const { user } = useAuth();
     return useQuery({
         queryKey: queryKeys.allTenants(page, pageSize, search),
         queryFn: () => getAllTenants(page, pageSize, search),
-
-        staleTime: 1000 * 30,
-        gcTime: 1000 * 60,
-
-        refetchOnMount: false,
-        refetchOnWindowFocus: false,
-        refetchOnReconnect: false,
+        enabled: !!user?.user?.userId
     });
 };

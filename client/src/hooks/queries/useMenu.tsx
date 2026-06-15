@@ -13,7 +13,5 @@ export const useMenu = () => {
         queryKey: queryKeys.userMenu(tenantId, userId, roleId),
         queryFn: () => getUserMenus(userId, roleId),
         enabled: !!user && !!roleId && !!tenantId,
-        // staleTime: 5 * 60 * 1000,
-        // retry: false,
     });
 }

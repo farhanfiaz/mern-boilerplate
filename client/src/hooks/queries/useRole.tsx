@@ -1,7 +1,7 @@
 import { createRole, deleteRole, getAllRoles, inActiveRole, updateRole } from "@/services/role.service";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useToast } from "../use-toast";
-import { Role } from "@/types/role/role.types";
+import { CreateRolePayload, Role, UpdateRolePayload } from "@/types/role/role.types";
 
 export const useRole = () => {
     const { data, isLoading, error } = useQuery({
@@ -15,7 +15,7 @@ export const useCreateMutationRole = () => {
     const { toast } = useToast();
     const queryClient = useQueryClient();
     return useMutation({
-        mutationFn: (role: Role) => createRole(role),
+        mutationFn: (role: CreateRolePayload) => createRole(role),
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['roles'] });
             toast({
@@ -38,7 +38,7 @@ export const useUpdateMutationRole = () => {
     const { toast } = useToast();
     const queryClient = useQueryClient();
     return useMutation({
-        mutationFn: (role: Role) => updateRole(role.id, role),
+        mutationFn: (role: UpdateRolePayload) => updateRole(role),
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['roles'] });
             toast({

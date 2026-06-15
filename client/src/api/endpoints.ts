@@ -43,5 +43,9 @@ export const ENDPOINTS = {
     UPDATE_USER: `${PREFIX}/user/update-user`,
     DELETE_USER: `${PREFIX}/user/delete-user`,
     IN_ACTIVE_USER: `${PREFIX}/user/in-active-user`,
-  }
+  },
+  ROLE_ACCESS: {
+    SAVE_ROLE_ACCESS: `${PREFIX}/role-access/save-role-access`,
+    GET_ALL_MENU_BY_ROLE_ID: `${PREFIX}/role-access/get-all-menu-by-role-id`,
+  },
 } as const;

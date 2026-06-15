@@ -3,7 +3,8 @@ export type Role = {
     name: string;
     description?: string;
     isSystem?: boolean;
-    createdAt?: string;
+    isActive?: boolean;
+    isDeleted?: boolean;
     tenantId?: string;
 };
 
@@ -16,3 +17,10 @@ export type AllRoles = {
         totalPages: number;
     };
 }
+
+// Create payload (id not allowed)
+export type CreateRolePayload = Omit<Role, "id">;
+
+// Update payload (id required)
+export type UpdateRolePayload = Pick<Role, "id"> &
+    Partial<Omit<Role, "id">>;

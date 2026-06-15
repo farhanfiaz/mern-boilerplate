@@ -90,7 +90,7 @@ export default function Roles() {
     };
 
     /* ---------------- EDIT ---------------- */
-    const handleEdit = (role: Role) => {
+    const handleEdit = (role: any) => {
         setEditing(true);
         setEditingId(role.id);
 
@@ -109,13 +109,12 @@ export default function Roles() {
         try {
             if (editing && editingId) {
                 await updateRole({
-                    ...roles.find((r) => r.id === editingId)!,
+                    id: editingId,
                     name: form.name,
                     description: form.description,
                 });
             } else {
                 await createRole({
-                    id: "",
                     name: form.name,
                     description: form.description,
                     isSystem: false,
@@ -182,7 +181,7 @@ export default function Roles() {
                             <TableHead>Name</TableHead>
                             <TableHead>Description</TableHead>
                             <TableHead>Type</TableHead>
-                            <TableHead>Created</TableHead>
+                            <TableHead>Status</TableHead>
                             <TableHead className="text-right">Actions</TableHead>
                         </TableRow>
                     </TableHeader>
@@ -192,91 +191,99 @@ export default function Roles() {
                             <TableRow>
                                 <TableCell colSpan={5} className="text-center">Loading...</TableCell>
                             </TableRow>
+                        ) : paginated.length === 0 ? (
+                            <TableRow>
+                                <TableCell colSpan={5} className="text-center">No roles found</TableCell>
+                            </TableRow>
                         ) : (
                             paginated.map((role) => (
-                            <TableRow key={role.id}>
+                                <TableRow key={role.id}>
 
-                                <TableCell className="font-medium">
-                                    {role.name}
-                                </TableCell>
+                                    <TableCell className="font-medium">
+                                        {role.name}
+                                    </TableCell>
 
-                                <TableCell>
-                                    {role.description || "-"}
-                                </TableCell>
+                                    <TableCell>
+                                        {role.description || "-"}
+                                    </TableCell>
 
-                                <TableCell>
-                                    {role.isSystem ? (
-                                        <Badge>System</Badge>
-                                    ) : (
-                                        <Badge variant="secondary">Custom</Badge>
-                                    )}
-                                </TableCell>
+                                    <TableCell>
+                                        {role.isSystem ? (
+                                            <Badge>System</Badge>
+                                        ) : (
+                                            <Badge variant="secondary">Custom</Badge>
+                                        )}
+                                    </TableCell>
 
-                                <TableCell>
-                                    {new Date(role?.createdAt ?? "").toLocaleDateString()}
-                                </TableCell>
+                                    <TableCell>
+                                        {role.isActive ? (
+                                            <Badge variant="outline">Active</Badge>
+                                        ) : (
+                                            <Badge variant="secondary">Inactive</Badge>
+                                        )}
+                                    </TableCell>
 
-                                <TableCell className="text-right">
-                                    <div className="flex justify-end gap-2">
+                                    <TableCell className="text-right">
+                                        <div className="flex justify-end gap-2">
 
-                                        {/* EDIT */}
-                                        <Button
-                                            size="icon"
-                                            variant="outline"
-                                            onClick={() => handleEdit(role)}
-                                        >
-                                            <Pencil className="h-4 w-4" />
-                                        </Button>
+                                            {/* EDIT */}
+                                            <Button
+                                                size="icon"
+                                                variant="outline"
+                                                onClick={() => handleEdit(role)}
+                                            >
+                                                <Pencil className="h-4 w-4" />
+                                            </Button>
 
-                                        {/* TOGGLE ACTIVE */}
-                                        <Button
-                                            size="sm"
-                                            variant="outline"
-                                            onClick={() => handleToggle(role.id)}
-                                        >
-                                            Toggle
-                                        </Button>
+                                            {/* TOGGLE ACTIVE */}
+                                            <Button
+                                                size="sm"
+                                                variant="outline"
+                                                onClick={() => handleToggle(role.id)}
+                                            >
+                                                {role.isActive ? "Deactivate" : "Activate"}
+                                            </Button>
 
-                                        {/* DELETE */}
-                                        <AlertDialog>
-                                            <AlertDialogTrigger asChild>
-                                                <Button size="icon" variant="destructive">
-                                                    <Trash2 className="h-4 w-4" />
-                                                </Button>
-                                            </AlertDialogTrigger>
+                                            {/* DELETE */}
+                                            <AlertDialog>
+                                                <AlertDialogTrigger asChild>
+                                                    <Button size="icon" variant="destructive">
+                                                        <Trash2 className="h-4 w-4" />
+                                                    </Button>
+                                                </AlertDialogTrigger>
 
-                                            <AlertDialogContent>
-                                                <AlertDialogHeader>
-                                                    <AlertDialogTitle>
-                                                        Delete Role
-                                                    </AlertDialogTitle>
+                                                <AlertDialogContent>
+                                                    <AlertDialogHeader>
+                                                        <AlertDialogTitle>
+                                                            Delete Role
+                                                        </AlertDialogTitle>
 
-                                                    <AlertDialogDescription>
-                                                        This will permanently delete{" "}
-                                                        <strong>{role.name}</strong>
-                                                    </AlertDialogDescription>
-                                                </AlertDialogHeader>
+                                                        <AlertDialogDescription>
+                                                            This will permanently delete{" "}
+                                                            <strong>{role.name}</strong>
+                                                        </AlertDialogDescription>
+                                                    </AlertDialogHeader>
 
-                                                <AlertDialogFooter>
-                                                    <AlertDialogCancel>
-                                                        Cancel
-                                                    </AlertDialogCancel>
+                                                    <AlertDialogFooter>
+                                                        <AlertDialogCancel>
+                                                            Cancel
+                                                        </AlertDialogCancel>
 
-                                                    <AlertDialogAction
-                                                        onClick={() => handleDelete(role.id)}
-                                                        className="bg-red-600 hover:bg-red-700"
-                                                    >
-                                                        Delete
-                                                    </AlertDialogAction>
-                                                </AlertDialogFooter>
-                                            </AlertDialogContent>
-                                        </AlertDialog>
+                                                        <AlertDialogAction
+                                                            onClick={() => handleDelete(role.id)}
+                                                            className="bg-red-600 hover:bg-red-700"
+                                                        >
+                                                            Delete
+                                                        </AlertDialogAction>
+                                                    </AlertDialogFooter>
+                                                </AlertDialogContent>
+                                            </AlertDialog>
 
-                                    </div>
-                                </TableCell>
+                                        </div>
+                                    </TableCell>
 
-                            </TableRow>
-                        )))}
+                                </TableRow>
+                            )))}
                     </TableBody>
                 </Table>
 

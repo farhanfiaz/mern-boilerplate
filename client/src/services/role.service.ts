@@ -1,6 +1,6 @@
 import { http } from "@/api/http";
 import { ENDPOINTS } from "@/api/endpoints";
-import { Role, AllRoles } from "@/types/role/role.types";
+import { Role, AllRoles, CreateRolePayload, UpdateRolePayload } from "@/types/role/role.types";
 
 export const getAllRoles = async (): Promise<AllRoles> => {
     const response = await http.get<AllRoles>(ENDPOINTS.ROLE.GET_ALL_ROLES);
@@ -18,7 +18,7 @@ export const getRoleById = async (id: string): Promise<Role> => {
     return response.data;
 }
 
-export const createRole = async (role: Role): Promise<Role> => {
+export const createRole = async (role: CreateRolePayload): Promise<Role> => {
     const response = await http.post<Role>(ENDPOINTS.ROLE.CREATE_ROLE, role);
     if (!response.success) {
         throw new Error(response.message);
@@ -26,8 +26,8 @@ export const createRole = async (role: Role): Promise<Role> => {
     return response.data;
 }
 
-export const updateRole = async (id: string, role: Role): Promise<Role> => {
-    const response = await http.put<Role>(ENDPOINTS.ROLE.UPDATE_ROLE + '/' + id, role);
+export const updateRole = async (role: UpdateRolePayload): Promise<Role> => {
+    const response = await http.put<Role>(ENDPOINTS.ROLE.UPDATE_ROLE + '/' + role.id, role);
     if (!response.success) {
         throw new Error(response.message);
     }

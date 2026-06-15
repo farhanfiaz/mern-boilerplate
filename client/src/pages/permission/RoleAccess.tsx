@@ -3,230 +3,284 @@ import { useEffect, useMemo, useState } from "react";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/Button";
-import { Badge } from "@/components/ui/badge";
-import { Switch } from "@/components/ui/switch";
-
 import {
-    Table,
-    TableBody,
-    TableCell,
-    TableHead,
-    TableHeader,
-    TableRow,
-} from "@/components/ui/table";
-import { useAuth } from "@/context/AuthContext";
-import { getSelectedRole } from "@/utils/auth-storage";
-import { allTenantRoles } from "@/services/role.service";
-import { Role } from "@/types/auth.types";
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from "@/components/ui/select";
 
-/* ---------------- TYPES ---------------- */
-
-type Menu = {
-    id: string;
-    name: string;
-    parentId?: string | null;
-    groupLabel?: string;
-    icon?: string;
-    url?: string;
-    isAction: boolean;
-    isActive: boolean;
-};
-
-/* ---------------- MOCK MENUS ---------------- */
-
-const mockMenus: Menu[] = [
-    {
-        id: "1",
-        name: "Dashboard",
-        groupLabel: "Main",
-        isAction: false,
-        isActive: true,
-    },
-    {
-        id: "2",
-        name: "Users",
-        groupLabel: "Main",
-        isAction: false,
-        isActive: true,
-    },
-    {
-        id: "3",
-        name: "Create User",
-        parentId: "2",
-        isAction: true,
-        isActive: false,
-    },
-    {
-        id: "4",
-        name: "Edit User",
-        parentId: "2",
-        isAction: true,
-        isActive: false,
-    },
-    {
-        id: "5",
-        name: "Settings",
-        groupLabel: "System",
-        isAction: false,
-        isActive: true,
-    },
-];
+import { useMenu } from "@/hooks/queries/useMenu";
+import { useRole } from "@/hooks/queries/useRole";
+import { useCreateMutationRoleAccess } from "@/hooks/mutations/useRoleAccessMutation";
+import { useGetAssignMenuByRoleId } from "@/hooks/queries/useGetAssignMenuByRoleId";
 
 export default function RoleAccess() {
-    const { user } = useAuth();
-    const [selectedRole, setSelectedRole] = useState(getSelectedRole() ?? '');
+    const [selectedRole, setSelectedRole] = useState("");
+    const [selectedParent, setSelectedParent] = useState("");
+    const [selectedMenus, setSelectedMenus] = useState<string[]>([]);
     const [search, setSearch] = useState("");
-    const [roles, setRoles] = useState<Role[]>([]);
 
-    const [menus, setMenus] = useState<Menu[]>(mockMenus);
+    const { mutate: createRoleAccess, isPending } =
+        useCreateMutationRoleAccess();
 
-    const fetchRoles = async () => {
-        const res = await allTenantRoles(user?.user?.tenantId ?? '');
-        setRoles(res);
-    };
+    const { data: menusData } = useMenu();
+    const { data: roleData } = useRole();
 
+    const { data: assignMenuByRoleId } =
+        useGetAssignMenuByRoleId(selectedRole);
+
+    const roles = roleData?.data || [];
+    const menus = menusData?.menus || [];
+
+    // ✅ RESET EVERYTHING WHEN ROLE CHANGES
     useEffect(() => {
-        fetchRoles();
-    }, [selectedRole, user?.user?.tenantId]);
+        setSelectedMenus([]);
+        setSelectedParent("");
+    }, [selectedRole]);
 
-    /* ---------------- FILTER ---------------- */
+    // ✅ SYNC SELECTED MENUS AFTER API LOAD
+    useEffect(() => {
+        const menuIds = assignMenuByRoleId?.data?.menuIds;
 
-    const filteredMenus = useMemo(() => {
-        return menus.filter((m) =>
-            m.name.toLowerCase().includes(search.toLowerCase())
+        if (Array.isArray(menuIds)) {
+            setSelectedMenus(menuIds);
+        }
+    }, [assignMenuByRoleId?.data?.menuIds]);
+
+    // ✅ PARENT MENUS
+    const parentMenus = useMemo(() => {
+        return menus.filter((m: any) => !m.parentId);
+    }, [menus]);
+
+    // ✅ AUTO SET FIRST PARENT
+    useEffect(() => {
+        if (!selectedParent && parentMenus.length > 0) {
+            setSelectedParent(parentMenus[0].id);
+        }
+    }, [parentMenus, selectedParent]);
+
+    // ✅ CHILD MENUS (SAFE)
+    const childMenus = useMemo(() => {
+        if (!selectedParent) return [];
+
+        return menus.filter(
+            (m: any) =>
+                m.parentId === selectedParent &&
+                m.name.toLowerCase().includes(search.toLowerCase())
         );
-    }, [menus, search]);
+    }, [menus, selectedParent, search]);
 
-    /* ---------------- GROUP BY PARENT ---------------- */
+    const getChildren = (parentId: string) =>
+        menus.filter((m: any) => m.parentId === parentId);
 
-    const grouped = useMemo(() => {
-        const parents = filteredMenus.filter((m) => !m.parentId);
-        const children = filteredMenus.filter((m) => m.parentId);
-
-        return parents.map((p) => ({
-            ...p,
-            children: children.filter((c) => c.parentId === p.id),
-        }));
-    }, [filteredMenus]);
-
-    /* ---------------- TOGGLE ---------------- */
-
-    const toggleMenu = (id: string) => {
-        setMenus((prev) =>
-            prev.map((m) =>
-                m.id === id ? { ...m, isActive: !m.isActive } : m
-            )
+    const toggleChild = (id: string) => {
+        setSelectedMenus((prev) =>
+            prev.includes(id)
+                ? prev.filter((x) => x !== id)
+                : [...prev, id]
         );
     };
 
-    /* ---------------- UI ---------------- */
+    const toggleParent = (parentId: string) => {
+        const children = getChildren(parentId);
+
+        if (children.length === 0) {
+            setSelectedMenus((prev) =>
+                prev.includes(parentId)
+                    ? prev.filter((id) => id !== parentId)
+                    : [...prev, parentId]
+            );
+            return;
+        }
+
+        const allSelected = children.every((c: any) =>
+            selectedMenus.includes(c.id)
+        );
+
+        if (allSelected) {
+            setSelectedMenus((prev) =>
+                prev.filter(
+                    (id) => !children.some((c: any) => c.id === id)
+                )
+            );
+        } else {
+            setSelectedMenus((prev) => [
+                ...new Set([
+                    ...prev,
+                    ...children.map((c: any) => c.id),
+                ]),
+            ]);
+        }
+    };
+
+    const isParentSelected = (parentId: string) => {
+        const children = getChildren(parentId);
+
+        if (children.length === 0) {
+            return selectedMenus.includes(parentId);
+        }
+
+        return children.every((c: any) =>
+            selectedMenus.includes(c.id)
+        );
+    };
+
+    const allSelected =
+        childMenus.length > 0 &&
+        childMenus.every((m: any) =>
+            selectedMenus.includes(m.id)
+        );
+
+    const handleSelectAll = () => {
+        if (allSelected) {
+            setSelectedMenus((prev) =>
+                prev.filter(
+                    (id) =>
+                        !childMenus.some((m: any) => m.id === id)
+                )
+            );
+        } else {
+            setSelectedMenus((prev) => [
+                ...new Set([
+                    ...prev,
+                    ...childMenus.map((m: any) => m.id),
+                ]),
+            ]);
+        }
+    };
+
+    const handleSave = () => {
+        if (!selectedRole) return;
+
+        createRoleAccess({
+            roleId: selectedRole,
+            menuIds: selectedMenus,
+        });
+    };
 
     return (
-        <div className="p-6 space-y-6 bg-gray-50 min-h-screen">
+        <div className="p-6 bg-gray-50 min-h-screen space-y-6">
 
             {/* HEADER */}
-            <div className="flex flex-col md:flex-row justify-between gap-3">
-
-                {/* ROLE SELECT */}
-                <div className="flex gap-3 items-center">
-                    <span className="text-sm font-medium">Role:</span>
-
-                    <select
-                        className="border rounded-md px-3 py-2 bg-white"
-                        value={selectedRole}
-                        onChange={(e) => setSelectedRole(e.target.value)}
-                    >
-                        {roles.map((r) => (
-                            <option key={r.id} value={r.id}>
+            <div className="flex gap-3 justify-between">
+                <Select
+                    value={selectedRole}
+                    onValueChange={setSelectedRole}
+                >
+                    <SelectTrigger className="w-[240px] bg-white">
+                        <SelectValue placeholder="Select Role" />
+                    </SelectTrigger>
+                    <SelectContent>
+                        {roles.map((r: any) => (
+                            <SelectItem key={r.id} value={r.id}>
                                 {r.name}
-                            </option>
+                            </SelectItem>
                         ))}
-                    </select>
-                </div>
+                    </SelectContent>
+                </Select>
 
-                {/* SEARCH */}
                 <Input
-                    className="max-w-sm"
-                    placeholder="Search menus..."
+                    className="max-w-sm bg-white"
+                    placeholder="Search child menus..."
                     value={search}
                     onChange={(e) => setSearch(e.target.value)}
                 />
-
             </div>
 
-            {/* SAVE BAR */}
+            {/* SAVE */}
             <div className="flex justify-end">
-                <Button>Save Permissions</Button>
+                <Button
+                    onClick={handleSave}
+                    disabled={isPending}
+                >
+                    {isPending ? "Saving..." : "Save Permissions"}
+                </Button>
             </div>
 
-            {/* MATRIX */}
-            <Card className="bg-white border rounded-xl shadow overflow-hidden">
+            {/* MAIN */}
+            <Card className="p-5">
+                <div className="grid grid-cols-12 gap-6">
 
-                <Table>
-                    <TableHeader>
-                        <TableRow>
-                            <TableHead>Menu</TableHead>
-                            <TableHead>Type</TableHead>
-                            <TableHead>Access</TableHead>
-                        </TableRow>
-                    </TableHeader>
+                    {/* LEFT */}
+                    <div className="col-span-12 lg:col-span-3">
+                        <div className="text-sm font-semibold mb-2">
+                            Parent Menus
+                        </div>
 
-                    <TableBody>
-                        {grouped.map((parent) => (
-                            <>
-                                {/* PARENT ROW */}
-                                <TableRow key={parent.id} className="bg-gray-50">
-
-                                    <TableCell className="font-semibold">
-                                        {parent.name}
-                                    </TableCell>
-
-                                    <TableCell>
-                                        <Badge variant="secondary">
-                                            {parent.groupLabel || "Menu"}
-                                        </Badge>
-                                    </TableCell>
-
-                                    <TableCell>
-                                        <Switch
-                                            checked={parent.isActive}
-                                            onCheckedChange={() => toggleMenu(parent.id)}
-                                        />
-                                    </TableCell>
-
-                                </TableRow>
-
-                                {/* CHILDREN */}
-                                {parent.children?.map((child) => (
-                                    <TableRow key={child.id}>
-
-                                        <TableCell className="pl-10">
-                                            └ {child.name}
-                                        </TableCell>
-
-                                        <TableCell>
-                                            {child.isAction ? (
-                                                <Badge>Action</Badge>
-                                            ) : (
-                                                <Badge variant="outline">Menu</Badge>
-                                            )}
-                                        </TableCell>
-
-                                        <TableCell>
-                                            <Switch
-                                                checked={child.isActive}
-                                                onCheckedChange={() => toggleMenu(child.id)}
-                                            />
-                                        </TableCell>
-
-                                    </TableRow>
-                                ))}
-                            </>
+                        {parentMenus.map((menu: any) => (
+                            <div
+                                key={menu.id}
+                                onClick={() =>
+                                    setSelectedParent(menu.id)
+                                }
+                                className={`p-3 border rounded cursor-pointer mb-2 ${selectedParent === menu.id
+                                        ? "bg-blue-50 border-blue-400"
+                                        : "bg-white"
+                                    }`}
+                            >
+                                <input
+                                    type="checkbox"
+                                    checked={isParentSelected(menu.id)}
+                                    onChange={() =>
+                                        toggleParent(menu.id)
+                                    }
+                                />
+                                <span className="ml-2">
+                                    {menu.name}
+                                </span>
+                            </div>
                         ))}
-                    </TableBody>
+                    </div>
 
-                </Table>
+                    {/* RIGHT */}
+                    <div className="col-span-12 lg:col-span-9">
 
+                        <div className="flex justify-between mb-3">
+                            <div className="font-semibold">
+                                Child Menus
+                            </div>
+
+                            {childMenus.length > 0 && (
+                                <label>
+                                    <input
+                                        type="checkbox"
+                                        checked={allSelected}
+                                        onChange={handleSelectAll}
+                                    />{" "}
+                                    Select All
+                                </label>
+                            )}
+                        </div>
+
+                        {childMenus.length === 0 ? (
+                            <div className="p-6 text-gray-400">
+                                No child menus
+                            </div>
+                        ) : (
+                            <div className="grid md:grid-cols-2 gap-3">
+                                {childMenus.map((menu: any) => (
+                                    <label
+                                        key={menu.id}
+                                        className="p-3 border rounded flex gap-2"
+                                    >
+                                        <input
+                                            type="checkbox"
+                                            checked={selectedMenus.includes(
+                                                menu.id
+                                            )}
+                                            onChange={() =>
+                                                toggleChild(menu.id)
+                                            }
+                                        />
+                                        {menu.name}
+                                    </label>
+                                ))}
+                            </div>
+                        )}
+                    </div>
+                </div>
             </Card>
         </div>
     );

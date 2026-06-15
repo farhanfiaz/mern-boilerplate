@@ -2,6 +2,7 @@ import { sendResponse } from "@server/utils/apiResponse";
 import { HttpStatusCode } from "@server/utils/httpStatusCode";
 import { Request, Response } from "express";
 import { RoleService } from "./role.service";
+import { nanoid } from "nanoid";
 
 export class RoleController {
     private roleService: RoleService;
@@ -52,8 +53,8 @@ export class RoleController {
 
     updateRole = async (req: Request, res: Response) => {
         try {
-            const { id } = req.params;
             const role = req.body;
+            const { id } = req.params;
             const updatedRole = await this.roleService.updateRole(String(id), role);
             return sendResponse(res as Response, HttpStatusCode.OK, true, "Role updated successfully", updatedRole);
         } catch (error) {

@@ -12,7 +12,7 @@ roleRoutes.get("/get-role-by-id/:id", roleController.getRoleById);
 
 roleRoutes.post("/create-role", roleController.createRole);
 
-roleRoutes.put("/edit-role/:id", roleController.updateRole);
+roleRoutes.put("/update-role/:id", roleController.updateRole);
 
 roleRoutes.delete("/delete-role/:id", roleController.deleteRole);
 

@@ -61,7 +61,7 @@ export class RoleService {
     }
 
     createRole = async (role: any) => {
-        const [roleExist] = await db.select().from(roles).where(eq(roles.name, role.name));
+        const [roleExist] = await db.select().from(roles).where(and(eq(roles.name, role.name), eq(roles.tenantId, role.tenantId)));
         if (roleExist) {
             throw new Error("Role already exists");
         }
@@ -70,12 +70,16 @@ export class RoleService {
     }
 
     updateRole = async (id: string, role: any) => {
+        const [roleExist] = await db.select().from(roles).where(and(eq(roles.id, role.id), eq(roles.tenantId, role.tenantId)));
+        if (roleExist) {
+            throw new Error("Role already exists");
+        }
         const [updatedRole] = await db.update(roles).set(role).where(eq(roles.id, id)).returning();
         return updatedRole;
     }
 
     deleteRole = async (id: string) => {
-        const [deletedRole] = await db.update(roles).set({ isDeleted: true }).where(eq(roles.id, id)).returning();
+        const [deletedRole] = await db.update(roles).set({ isDeleted: true, isActive: false }).where(eq(roles.id, id)).returning();
         return deletedRole;
     }
 
@@ -84,8 +88,12 @@ export class RoleService {
         if (!role) {
             throw new Error("Role not found");
         }
+        let isDeleted = role.isDeleted;
+        if (role.isDeleted) {
+            isDeleted = false;
+        }
 
-        const [inactiveRole] = await db.update(roles).set({ isActive: !role.isActive }).where(eq(roles.id, id)).returning();
+        const [inactiveRole] = await db.update(roles).set({ isActive: !role.isActive, isDeleted: isDeleted }).where(eq(roles.id, id)).returning();
         return inactiveRole;
     }
 }

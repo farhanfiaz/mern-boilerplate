@@ -37,22 +37,15 @@ import {
 import { Pencil, Plus, Search, Trash2 } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { getInitials } from "@/utils/utils";
-import { createUser, deleteUser, getAllUserByTenant, updateRole } from "@/services/user-management.service";
 import { User } from "@/types/user-management/user-management.types";
-import { useToast } from "@/hooks/use-toast";
 import logger from "@/utils/logger";
+import { useUserManagement, useCreateUser, useUpdateUser, useDeleteUser } from "@/hooks/queries/useUserManagement";
 
 export default function Users() {
-
-    const { toast } = useToast();
-
-    const [users, setUsers] = useState<User[]>([]);
-    const [loading, setLoading] = useState(false);
 
     const [search, setSearch] = useState("");
     const [page, setPage] = useState(1);
     const pageSize = 5;
-    const [totalPages, setTotalPages] = useState(1);
 
     const [open, setOpen] = useState(false);
     const [editing, setEditing] = useState(false);
@@ -67,37 +60,13 @@ export default function Users() {
         phone: "",
     });
 
-    /* ---------------- FETCH USERS ---------------- */
+    const { data, isLoading, error } = useUserManagement(page, pageSize, search, "", "");
+    const { mutate: createUser, isPending: isCreating } = useCreateUser();
+    const { mutate: updateUser, isPending: isUpdating } = useUpdateUser();
+    const { mutate: deleteUser, isPending: isDeleting } = useDeleteUser();
 
-    const fetchUsers = async () => {
-        try {
-            setLoading(true);
-
-            const response = await getAllUserByTenant({
-                page,
-                limit: pageSize,
-                search,
-                status: "",
-                roleId: "",
-            });
-
-            setUsers(response.users);
-            setTotalPages(response.totalPages);
-        } catch (error) {
-            logger.error(error);
-            toast({
-                title: "Error",
-                description: "Failed to fetch users",
-                variant: "destructive",
-            });
-        } finally {
-            setLoading(false);
-        }
-    };
-
-    useEffect(() => {
-        fetchUsers();
-    }, [page, search]);
+    const users = data?.users ?? [];
+    const totalPages = data?.totalPages ?? 1;
 
     /* ---------------- ADD ---------------- */
 
@@ -144,13 +113,9 @@ export default function Users() {
 
                 if (!existingUser) return;
 
-                await updateRole(editingId, {
+                await updateUser({
                     ...existingUser,
                     ...form,
-                });
-                toast({
-                    title: "Success",
-                    description: "User updated successfully",
                 });
             } else {
                 await createUser({
@@ -161,21 +126,11 @@ export default function Users() {
                     createdAt: new Date().toISOString(),
                     ...form,
                 });
-                toast({
-                    title: "Success",
-                    description: "User created successfully",
-                });
             }
 
-            await fetchUsers();
             setOpen(false);
         } catch (error) {
             logger.error(error);
-            toast({
-                title: "Error",
-                description: "Failed to create/update user",
-                variant: "destructive",
-            });
         }
     };
 
@@ -186,21 +141,10 @@ export default function Users() {
 
         try {
             await deleteUser(deleteId);
-            toast({
-                title: "Success",
-                description: "User deleted successfully",
-            });
-
-            await fetchUsers();
 
             setDeleteId(null);
         } catch (error) {
             logger.error(error);
-            toast({
-                title: "Error",
-                description: "Failed to delete user",
-                variant: "destructive",
-            });
         }
     };
 
@@ -246,7 +190,7 @@ export default function Users() {
                     </TableHeader>
 
                     <TableBody>
-                        {loading ? (
+                        {isLoading ? (
                             <TableRow>
                                 <TableCell colSpan={6} className="text-center py-6">
                                     Loading...

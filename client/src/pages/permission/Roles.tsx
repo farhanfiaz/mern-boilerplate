@@ -31,17 +31,10 @@ import {
 
 import { Role, AllRoles } from "@/types/role/role.types";
 
-import {
-    getAllRoles,
-    createRole,
-    updateRole,
-    deleteRole,
-    inActiveRole,
-} from "@/services/role.service";
-
 import { Pencil, Plus, Search, Trash2 } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useToast } from "@/hooks/use-toast";
+import { useCreateMutationRole, useUpdateMutationRole, useDeleteMutationRole, useInActiveMutationRole, useRole } from "@/hooks/queries/useRole";
 
 export default function Roles() {
 
@@ -54,8 +47,14 @@ export default function Roles() {
     const [page, setPage] = useState(1);
     const pageSize = 5;
 
-    const roles = data?.data ?? [];
-    const pagination = data?.pagination;
+    const { data: rolesData, isLoading, error } = useRole();
+    const { mutate: createRole } = useCreateMutationRole();
+    const { mutate: updateRole } = useUpdateMutationRole();
+    const { mutate: deleteRole } = useDeleteMutationRole();
+    const { mutate: inActiveRole } = useInActiveMutationRole();
+
+    const roles = rolesData?.data ?? [];
+    const pagination = rolesData?.pagination;
 
     /* ---------------- MODAL ---------------- */
     const [open, setOpen] = useState(false);
@@ -67,16 +66,6 @@ export default function Roles() {
         name: "",
         description: "",
     });
-
-    /* ---------------- FETCH ---------------- */
-    const fetchRoles = async () => {
-        const res = await getAllRoles();
-        setData(res);
-    };
-
-    useEffect(() => {
-        fetchRoles();
-    }, []);
 
     /* ---------------- FILTER + PAGINATION (LOCAL UI ONLY) ---------------- */
     const filtered = roles.filter((r) =>
@@ -119,14 +108,10 @@ export default function Roles() {
 
         try {
             if (editing && editingId) {
-                await updateRole(editingId, {
+                await updateRole({
                     ...roles.find((r) => r.id === editingId)!,
                     name: form.name,
                     description: form.description,
-                });
-                toast({
-                    title: "Role updated",
-                    variant: "success",
                 });
             } else {
                 await createRole({
@@ -134,22 +119,12 @@ export default function Roles() {
                     name: form.name,
                     description: form.description,
                     isSystem: false,
-                    createdAt: new Date().toISOString(),
-                });
-                toast({
-                    title: "Role created",
-                    variant: "success",
                 });
             }
 
             setOpen(false);
-            await fetchRoles();
         } catch (err) {
             console.error(err);
-            toast({
-                title: "Role create/update failed",
-                variant: "destructive",
-            });
         }
     };
 
@@ -157,17 +132,8 @@ export default function Roles() {
     const handleDelete = async (id: string) => {
         try {
             await deleteRole(id);
-            toast({
-                title: "Role deleted",
-                variant: "success",
-            });
-            await fetchRoles();
         } catch (err) {
             console.error(err);
-            toast({
-                title: "Role delete failed",
-                variant: "destructive",
-            });
         }
     };
 
@@ -175,17 +141,8 @@ export default function Roles() {
     const handleToggle = async (id: string) => {
         try {
             await inActiveRole(id);
-            toast({
-                title: "Role updated",
-                variant: "success",
-            });
-            await fetchRoles();
         } catch (err) {
             console.error(err);
-            toast({
-                title: "Role update failed",
-                variant: "destructive",
-            });
         }
     };
 
@@ -231,7 +188,12 @@ export default function Roles() {
                     </TableHeader>
 
                     <TableBody>
-                        {paginated.map((role) => (
+                        {isLoading ? (
+                            <TableRow>
+                                <TableCell colSpan={5} className="text-center">Loading...</TableCell>
+                            </TableRow>
+                        ) : (
+                            paginated.map((role) => (
                             <TableRow key={role.id}>
 
                                 <TableCell className="font-medium">
@@ -251,7 +213,7 @@ export default function Roles() {
                                 </TableCell>
 
                                 <TableCell>
-                                    {new Date(role.createdAt).toLocaleDateString()}
+                                    {new Date(role?.createdAt ?? "").toLocaleDateString()}
                                 </TableCell>
 
                                 <TableCell className="text-right">
@@ -314,7 +276,7 @@ export default function Roles() {
                                 </TableCell>
 
                             </TableRow>
-                        ))}
+                        )))}
                     </TableBody>
                 </Table>
 

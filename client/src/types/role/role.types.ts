@@ -2,8 +2,8 @@ export type Role = {
     id: string;
     name: string;
     description?: string;
-    isSystem: boolean;
-    createdAt: string;
+    isSystem?: boolean;
+    createdAt?: string;
     tenantId?: string;
 };
 

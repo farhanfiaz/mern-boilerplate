@@ -18,18 +18,22 @@ export class UserController {
     }
 
     createUser = async (req: Request, res: Response) => {
-        const { firstName, lastName, email, username, phone, roleId } = req.body;
-        const tenantId = req.user?.tenantId ?? null;
-        const result = await this.userService.createUser({
-            firstName,
-            lastName,
-            email,
-            username,
-            phone,
-            roleId,
-            tenantId
-        });
-        return sendResponse(res as Response, HttpStatusCode.OK, true, "User created successfully", result);
+        try {
+            const { firstName, lastName, email, username, phone, roleId } = req.body;
+            const tenantId = req.user?.tenantId ?? null;
+            const result = await this.userService.createUser({
+                firstName,
+                lastName,
+                email,
+                username,
+                phone,
+                roleId,
+                tenantId
+            });
+            return sendResponse(res as Response, HttpStatusCode.OK, true, "User created successfully", result);
+        } catch (error) {
+            return sendResponse(res as Response, HttpStatusCode.INTERNAL_SERVER_ERROR, false, (error as Error).message, null);
+        }
     }
 
     updateUser = async (req: Request, res: Response) => {

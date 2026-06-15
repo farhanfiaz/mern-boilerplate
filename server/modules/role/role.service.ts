@@ -61,6 +61,10 @@ export class RoleService {
     }
 
     createRole = async (role: any) => {
+        const [roleExist] = await db.select().from(roles).where(eq(roles.name, role.name));
+        if (roleExist) {
+            throw new Error("Role already exists");
+        }
         const [createdRole] = await db.insert(roles).values(role).returning();
         return createdRole;
     }
@@ -76,7 +80,12 @@ export class RoleService {
     }
 
     inActiveRole = async (id: string) => {
-        const [inactiveRole] = await db.update(roles).set({ isActive: false }).where(eq(roles.id, id)).returning();
+        const [role] = await db.select().from(roles).where(eq(roles.id, id));
+        if (!role) {
+            throw new Error("Role not found");
+        }
+
+        const [inactiveRole] = await db.update(roles).set({ isActive: !role.isActive }).where(eq(roles.id, id)).returning();
         return inactiveRole;
     }
 }

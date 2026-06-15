@@ -4,6 +4,7 @@ import { and, count, desc, eq, ilike, or, sql } from "drizzle-orm";
 import { ActiveTenant } from "./tenant.types";
 import * as fs from 'fs/promises';
 import * as path from 'path';
+import logger from "@/utils/logger";
 
 export class TenantService {
     constructor() {
@@ -12,6 +13,11 @@ export class TenantService {
 
     async getTenantId(): Promise<string | null> {
         const tenant = await db.query.tenants.findFirst({
+            where: (tenants, { eq }) =>
+                and(
+                    eq(tenants.isActive, true),
+                    eq(tenants.isDeleted, false)
+                ),
             columns: {
                 id: true,
             },
@@ -33,6 +39,25 @@ export class TenantService {
             },
         });
         return tenants;
+    }
+    async getCurrentUserActiveTenant(ownerId: string): Promise<ActiveTenant[]> {
+        const result = await db.query.users.findFirst({
+            where: (users, { eq }) => eq(users.id, ownerId),
+            with: {
+                tenant: {
+                    columns: {
+                        id: true,
+                        name: true,
+                    },
+                },
+            },
+        });
+
+        if (!result?.tenant) {
+            return [];
+        }
+
+        return [result.tenant];
     }
 
     async getAllTenants(page: number = 1, limit: number = 10, search?: any) {
@@ -207,7 +232,7 @@ export class TenantService {
         const [updatedTenant] = await db
             .update(tenants)
             .set(tenant)
-            .where(eq(tenants.id, tenantId))
+            .where(and(eq(tenants.id, tenantId), eq(tenants.isDeleted, false)))
             .returning();
 
         return updatedTenant;
@@ -216,7 +241,7 @@ export class TenantService {
     async deleteTenant(tenantId: string): Promise<any> {
         const [deletedTenant] = await db
             .update(tenants)
-            .set({ isDeleted: true })
+            .set({ isActive: false, isDeleted: true })
             .where(eq(tenants.id, tenantId))
             .returning();
 
@@ -224,13 +249,27 @@ export class TenantService {
     }
 
     async inActiveTenant(tenantId: string): Promise<any> {
-        const [inActiveTenant] = await db
+        const tenant = await db.query.tenants.findFirst({
+            where: eq(tenants.id, tenantId),
+        });
+
+        if (tenant && tenant?.isDeleted) {
+            throw new Error("This tenant is deleted so you can't change its status.");
+        }
+
+        const oldIsActive = tenant?.isActive;
+
+        const [updatedTenant] = await db
             .update(tenants)
-            .set({ isActive: false })
+            .set({
+                isActive: !oldIsActive,
+            })
             .where(eq(tenants.id, tenantId))
             .returning();
 
-        return inActiveTenant;
+        logger.info(`Old: ${oldIsActive}, New: ${updatedTenant.isActive}`);
+
+        return updatedTenant;
     }
 
 }

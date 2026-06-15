@@ -19,6 +19,7 @@ export type AuthResponse = {
 export type Role = {
   id: string;
   name: string;
+  isSystem: boolean;
 }
 
 export type JWTTokenUserInfo = {

@@ -90,7 +90,7 @@ axiosInstance.interceptors.response.use(
         error.response.data
       );
     }
-
+    logger.error("Interceptor error response data => ", error.response.data?.message);
     const originalRequest = error.config;
 
     const isTokenExpired =

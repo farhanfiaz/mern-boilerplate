@@ -42,12 +42,12 @@ export default function RoleAccess() {
 
     // ✅ SYNC SELECTED MENUS AFTER API LOAD
     useEffect(() => {
-        const menuIds = assignMenuByRoleId?.data?.menuIds;
+        const menuIds = assignMenuByRoleId?.menuIds;
 
         if (Array.isArray(menuIds)) {
             setSelectedMenus(menuIds);
         }
-    }, [assignMenuByRoleId?.data?.menuIds]);
+    }, [assignMenuByRoleId?.menuIds]);
 
     // ✅ PARENT MENUS
     const parentMenus = useMemo(() => {
@@ -216,8 +216,8 @@ export default function RoleAccess() {
                                     setSelectedParent(menu.id)
                                 }
                                 className={`p-3 border rounded cursor-pointer mb-2 ${selectedParent === menu.id
-                                        ? "bg-blue-50 border-blue-400"
-                                        : "bg-white"
+                                    ? "bg-blue-50 border-blue-400"
+                                    : "bg-white"
                                     }`}
                             >
                                 <input

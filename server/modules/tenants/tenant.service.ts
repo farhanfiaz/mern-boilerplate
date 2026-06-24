@@ -1,5 +1,5 @@
 import { db } from "@server/db/connection";
-import { tenants, users } from "@server/db/schema";
+import { roles, tenants, users } from "@server/db/schema";
 import { and, count, desc, eq, ilike, or, sql } from "drizzle-orm";
 import { ActiveTenant } from "./tenant.types";
 import * as fs from 'fs/promises';
@@ -9,6 +9,114 @@ import logger from "@/utils/logger";
 export class TenantService {
     constructor() {
 
+    }
+
+    async getTenantWithPagination(page: number = 1, limit: number = 10, search?: string, selectedRole?: string | ''): Promise<{
+        tenants: any[];
+        pagination: {
+            nextPage: number;
+            hasNextPage: boolean;
+        };
+    }> {
+        const offset = (page - 1) * limit;
+
+        const searchTerm =
+            search && search.trim() !== '' ? `%${search.trim()}%` : null;
+
+        const baseFilter = searchTerm
+            ? or(
+                ilike(tenants.name, searchTerm),
+                ilike(tenants.description, searchTerm)
+            )
+            : undefined;
+
+        const [data, totalResult] = await Promise.all([
+            db
+                .select(
+                    {
+                        id: tenants.id,
+                        name: tenants.name,
+                        description: tenants.description,
+                        logo: tenants.logo,
+                        ownerId: users.tenantId??"",
+                        ownerName: sql`${users.firstName} || ' ' || ${users.lastName}`,
+                    }
+                )
+                .from(tenants)
+                 .leftJoin(users, eq(tenants.id, users.tenantId))
+                 //.innerJoin(roles, and(eq(roles.tenantId, tenants.id), eq(roles.id, selectedRole)))
+                .where(baseFilter)
+                .orderBy(desc(tenants.createdAt))
+                .limit(limit)
+                .offset(offset),
+
+            db
+                .select({ count: count() })
+                .from(tenants)
+                .leftJoin(users, eq(tenants.id, users.tenantId))
+                .where(baseFilter),
+        ]);
+
+        const total = Number(totalResult[0].count);
+
+        return {
+            tenants: data,
+            pagination: {
+                nextPage: page < total ? page + 1 : 0,
+                hasNextPage: page < total
+            },
+        }
+    }
+
+    getUserTenantsWithPagination = async (page: number = 1, limit: number = 10, userId: string, search?: string, selectedRole?: string | '') => {
+        const offset = (page - 1) * limit;
+
+        const searchTerm =
+            search && search.trim() !== '' ? `%${search.trim()}%` : null;
+
+        const baseFilter = searchTerm
+            ? or(
+                ilike(tenants.name, searchTerm),
+                ilike(tenants.description, searchTerm)
+            )
+            : undefined;
+
+        const [data, totalResult] = await Promise.all([
+            db
+                .select(
+                    {
+                        id: tenants.id,
+                        name: tenants.name,
+                        description: tenants.description,
+                        logo: tenants.logo,
+                        ownerId: users.tenantId??"",
+                        ownerName: sql`${users.firstName} || ' ' || ${users.lastName}`,
+                    }
+                )
+                .from(tenants)
+                .leftJoin(users, eq(tenants.id, users.tenantId))
+                //.innerJoin(roles, and(eq(roles.tenantId, tenants.id), eq(roles.id, selectedRole)))
+                .where(and(...[baseFilter, eq(users.id, userId)]))
+                .orderBy(desc(tenants.createdAt))
+                .limit(limit)
+                .offset(offset),
+
+            db
+                .select({ count: count() })
+                .from(tenants)
+                .leftJoin(users, eq(tenants.id, users.tenantId))
+                .where(and(...[baseFilter, eq(users.id, userId)])),
+        ]);
+
+        const total = Number(totalResult[0].count);
+
+        return {
+            tenants: data,
+            pagination: {
+                nextPage: page < total ? page + 1 : 0,
+                hasNextPage: page < total
+            },
+        }
     }
 
     async getTenantId(): Promise<string | null> {

@@ -26,6 +26,7 @@ export const ENDPOINTS = {
     EDIT_TENANT: `${PREFIX}/tenant/edit-tenant`,
     DELETE_TENANT: `${PREFIX}/tenant/delete-tenant`,
     IN_ACTIVE_TENANT: `${PREFIX}/tenant/in-active-tenant`,
+    CURRENT_ACTIVE_WITH_PAGINATION: `${PREFIX}/tenant/current-active-with-pagination`
   },
   ROLE: {
     GET_ALL_ROLES: `${PREFIX}/role/get-all-roles`,

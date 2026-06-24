@@ -1,6 +1,6 @@
 import { Button } from "@/components/ui/Button";
 import { useAuth } from "@/context/AuthContext";
-import { cn, getInitials } from "@/utils/utils";
+import { cn, getInitials, getRoleName } from "@/utils/utils";
 import { LogOut, Menu, X } from "lucide-react";
 import { ComponentType, useEffect, useState } from "react";
 import { Link, Redirect } from "wouter";
@@ -120,7 +120,7 @@ export function Sidebar() {
                         </p>
 
                         <p className="text-xs text-muted-foreground">
-                            Super Admin
+                            {getRoleName(user?.user?.role)}
                         </p>
                     </div>
                 </div>

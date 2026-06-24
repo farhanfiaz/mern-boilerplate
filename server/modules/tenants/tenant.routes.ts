@@ -17,4 +17,6 @@ tenantRoutes.delete("/delete-tenant/:id", tenantController.deleteTenant);
 
 tenantRoutes.put("/in-active-tenant/:id", tenantController.inActiveTenant);
 
+tenantRoutes.get("/current-active-with-pagination", tenantController.getTenantWithPagination);
+
 export default tenantRoutes;

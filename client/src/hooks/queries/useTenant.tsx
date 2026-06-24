@@ -1,17 +1,24 @@
 import { useAuth } from "@/context/AuthContext";
-import { useQuery } from "@tanstack/react-query";
-import { getCurrentActiveTenant } from "@/services/menu.service";
+import { useInfiniteQuery, useQuery } from "@tanstack/react-query";
+import { getCurrentActiveTenant, getCurrentActiveTenantWIthPagination } from "@/services/menu.service";
 import { queryKeys } from "@/constants/queryKeys";
 import { getAllTenants } from "@/services/tenant.service";
 
-export const useTenant = () => {
+export const useTenant = (search:any) => {
     const { user } = useAuth();
     const tenantId = user?.user?.tenantId ?? "";
-
-    return useQuery({
-        queryKey: queryKeys.currentActiveTenant(tenantId),
-        queryFn: getCurrentActiveTenant,
-        enabled: !!user?.user?.userId
+    // return useQuery({
+    //     queryKey: queryKeys.currentActiveTenant(tenantId),
+    //     queryFn: getCurrentActiveTenant,
+    //     enabled: !!user?.user?.userId
+    // });
+    return useInfiniteQuery({
+        queryKey: ["tenant-pagination-new", search],
+        queryFn: ({ pageParam = 1 }) => getCurrentActiveTenantWIthPagination({ page: pageParam, limit: 10, search: search }),
+        getNextPageParam: (lastPage) => {
+            return lastPage.pagination.hasNextPage ? lastPage.pagination.nextPage : undefined;
+        },
+        initialPageParam: 1
     });
 };
 

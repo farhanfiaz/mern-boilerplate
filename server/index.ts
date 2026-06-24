@@ -70,7 +70,7 @@ app.get("/api/users/:id/photo", async (req, res) => {
 
   const defaultImage = path.join(
     process.cwd(),
-    "uploads/tenants/1781274373995.jpeg"
+    "uploads/default-image.png"
   );
 
   const finalPath = fs.existsSync(photoPath)

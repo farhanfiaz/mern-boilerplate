@@ -14,7 +14,7 @@ import { LogOut, User, Lock, ChevronDown } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import logger from '@/utils/logger';
-import { getInitials } from '@/utils/utils';
+import { getInitials, getRoleName } from '@/utils/utils';
 import { ChangePasswordForm } from './ChangePasswordForm';
 
 export function UserProfileMenu() {
@@ -57,7 +57,7 @@ export function UserProfileMenu() {
                         {/* <ChevronDown className="h-4 w-4 text-gray-500" /> */}
                     </Button>
                 </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="w-56">
+                <DropdownMenuContent align="end" className="w-56 bg-background border shadow-md">
                     <DropdownMenuLabel className="font-normal">
                         <div className="flex flex-col space-y-1">
                             <p className="text-sm font-medium leading-none">
@@ -67,15 +67,7 @@ export function UserProfileMenu() {
                                 {user?.user?.email}
                             </p>
                             <p className="text-xs leading-none text-muted-foreground">
-                                <span className="text-xs leading-none text-muted-foreground">
-                                    {user?.user?.userId}
-                                </span>
-                                {user?.user?.role.at(0)?.name ? (
-                                    <span className="text-xs leading-none text-muted-foreground">
-                                        {" "}
-                                        - {user?.user?.role.at(0)?.name}
-                                    </span>
-                                ) : null}
+                                {getRoleName(user?.user?.role)}
                             </p>
                         </div>
                     </DropdownMenuLabel>

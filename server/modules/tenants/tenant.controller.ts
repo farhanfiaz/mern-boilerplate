@@ -11,6 +11,20 @@ export class TenantController {
         this.tenantService = new TenantService();
     }
 
+    getTenantWithPagination = async (req: Request, res: Response) => {
+        const { page = 1, limit = 10, search = '' } = req.query;
+        const isSystemAdmin = req?.user?.isSystemAdmin;
+        const userId = req?.user?.userId ?? '';
+        const selectedRole = req?.user?.selectedRole ?? '';
+        let tenants: any = [];
+        if (isSystemAdmin) {
+            tenants = await this.tenantService.getTenantWithPagination(Number(page), Number(limit), String(search), selectedRole);
+        } else {
+            tenants = await this.tenantService.getUserTenantsWithPagination(Number(page), Number(limit), userId, String(search), selectedRole);
+        }
+        return sendResponse(res as Response, HttpStatusCode.OK, true, "Tenants fetched successfully", tenants);
+    }
+
     getCurrentActiveTenant = async (req: Request, res: Response) => {
         const isSystemAdmin = req?.user?.isSystemAdmin;
         const ownerId = req?.user?.userId;
@@ -29,9 +43,9 @@ export class TenantController {
         const userId = req?.user?.userId ?? '';
         let AllTenant: any = [];
         if (isSystemAdmin) {
-            AllTenant = await this.tenantService.getAllTenants(Number(page), Number(limit), search);
+            AllTenant = await this.tenantService.getAllTenants(Number(page), Number(limit), String(search));
         } else {
-            AllTenant = await this.tenantService.getUserAllTenants(Number(page), Number(limit), userId, search);
+            AllTenant = await this.tenantService.getUserAllTenants(Number(page), Number(limit), userId, String(search));
         }
         return sendResponse(res as Response, HttpStatusCode.OK, true, "Tenant fetched successfully", AllTenant);
     }

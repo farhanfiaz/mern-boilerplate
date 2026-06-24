@@ -8,6 +8,7 @@ declare global {
         email: string;
         isSystemAdmin: boolean;
         tenantId: string;
+        selectedRole: string;
       };
     }
   }

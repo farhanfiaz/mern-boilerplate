@@ -135,7 +135,7 @@ export function NotificationBell() {
                     )}
                 </Button>
             </PopoverTrigger>
-            <PopoverContent className="w-80 relative h-96 overflow-y-auto">
+            <PopoverContent className="w-80 h-96 overflow-y-auto bg-white dark:bg-slate-950 border shadow-lg z-50">
                 <div className="grid gap-4">
                     <div className="space-y-2">
                         <div className="flex items-center justify-between">

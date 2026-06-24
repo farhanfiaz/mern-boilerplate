@@ -1,5 +1,6 @@
 import { InternalAxiosRequestConfig } from "axios";
 import { AuthResponse } from "@/types/auth.types";
+import { getSelectedRole } from "@/utils/auth-storage";
 
 export function applyAuthHeaders(
     config: InternalAxiosRequestConfig,
@@ -20,6 +21,10 @@ export function applyAuthHeaders(
 
     if (userObj?.user?.userId) {
         config.headers["user-id"] = userObj.user.userId;
+    }
+
+    if (getSelectedRole()) {
+        config.headers["role"] = getSelectedRole() as string;
     }
 
     return config;

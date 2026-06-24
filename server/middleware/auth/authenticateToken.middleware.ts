@@ -46,6 +46,11 @@ export const authenticateToken = async (req: Request, res: Response, next: NextF
 
         const parsedTenantId = isSystemAdmin ? (tenantId as string) : (tenantId as string);
 
+        const selectedRole = req.headers["role"];
+        if (selectedRole && !user.role.some(r => r.id === selectedRole)) {
+            return sendResponse(res, HttpStatusCode.UNAUTHORIZED, false, "User does not have the selected role");
+        }
+
         // const isCompanyDeleted = await systemConfigService.isCompanyDeleted(parsedCompanyId);
         // if (isCompanyDeleted) {
         //     return res.status(401).json({
@@ -81,7 +86,7 @@ export const authenticateToken = async (req: Request, res: Response, next: NextF
         // }
         // console.log("----------userCompanies-------------", companyId);
 
-        req.user = { ...user, isSystemAdmin: isSystemAdmin, tenantId: parsedTenantId };
+        req.user = { ...user, isSystemAdmin: isSystemAdmin, tenantId: parsedTenantId, selectedRole: selectedRole as string };
         next();
     } catch (error) {
         logger.error("JWT verification error:", error);

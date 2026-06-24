@@ -21,7 +21,8 @@ const config = {
     refreshExpiresIn: process.env.VITE_REFRESH_EXPIRES_IN!,
   },
   frontend: {
-    url: process.env.VITE_FRONTEND_URL,
+    urls: process.env.VITE_FRONTEND_URL?.split(',')
+    .map(url => url.trim()),
   },
   SESSION_KEY:process.env.VITE_SESSION_KEY!
 };

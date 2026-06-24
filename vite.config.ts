@@ -4,6 +4,8 @@ import path from "path";
 import tailwindcss from "@tailwindcss/vite";
 
 export default defineConfig({
+  // Load .env from project root (not client/) so VITE_* vars are available at build time
+  envDir: path.resolve(import.meta.dirname),
   plugins: [
     react(),
     tailwindcss()

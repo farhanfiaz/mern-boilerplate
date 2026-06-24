@@ -52,10 +52,10 @@ export default function TenantPage() {
     const tenants = data?.data ?? [];
     const pagination = data?.pagination;
 
-    const createTenantMutation = useCreateTenant();
-    const editTenantMutation = useEditTenant();
-    const deleteTenantMutation = useDeleteTenant();
-    const inActiveTenantMutation = useInActivateTenant();
+    const { mutate: createTenant, isPending: isCreatingTenant , error: createTenantError} = useCreateTenant();
+    const { mutate: editTenant, isPending: isEditingTenant , error: editTenantError} = useEditTenant();
+    const { mutate: deleteTenant, isPending: isDeletingTenant , error: deleteTenantError} = useDeleteTenant();
+    const { mutate: inActiveTenant, isPending: isInActiveTenant , error: inActiveTenantError} = useInActivateTenant();
 
     /* ---------------- FORM ---------------- */
     const [form, setForm] = useState({
@@ -133,7 +133,7 @@ export default function TenantPage() {
         setErrors({});
         try {
             if (editing && editingId) {
-                await editTenantMutation.mutateAsync({
+                editTenant({
                     id: editingId,
                     name: form.name,
                     slug: form.slug,
@@ -144,12 +144,19 @@ export default function TenantPage() {
                 setEditing(false);
                 setEditingId(null);
             } else {
-                await createTenantMutation.mutateAsync({
+                createTenant({
                     name: form.name,
                     slug: form.slug,
                     description: form.description,
                     website: form.website,
                     logo: form.logo,
+                }, {
+                    onSuccess: () => {
+
+                    },
+                    onError: () => {
+                        
+                    },
                 });
             }
 
@@ -162,7 +169,7 @@ export default function TenantPage() {
     /* ---------------- DELETE ---------------- */
     const handleDelete = async (id: string) => {
         try {
-            await deleteTenantMutation.mutateAsync(id);
+            deleteTenant(id);
         } catch (err) {
             console.error(err);
         }
@@ -171,7 +178,7 @@ export default function TenantPage() {
     /* ---------------- ACTIVE / INACTIVE ---------------- */
     const handleToggleActive = async (id: string, isActive: boolean) => {
         try {
-            await inActiveTenantMutation.mutateAsync(id);
+            inActiveTenant(id);
         } catch (err) {
             console.error(err);
         }
@@ -264,11 +271,11 @@ export default function TenantPage() {
                                         <Button
                                             size="icon"
                                             variant="outline"
-                                            disabled={editTenantMutation.isPending || inActiveTenantMutation.isPending}
+                                            disabled={isEditingTenant || isInActiveTenant}
                                             onClick={() => handleEdit(tenant)}
                                         >
                                             <Pencil className="h-4 w-4" />
-                                            {editTenantMutation.isPending && (
+                                            {isEditingTenant && (
                                                 <Loader2 className="ml-2 h-4 w-4 animate-spin" />
                                             )}
                                         </Button>
@@ -277,11 +284,11 @@ export default function TenantPage() {
                                         <Button
                                             size="sm"
                                             variant="outline"
-                                            disabled={editTenantMutation.isPending || inActiveTenantMutation.isPending}
+                                            disabled={isEditingTenant || isInActiveTenant}
                                             onClick={() => handleToggleActive(tenant.id, tenant.isActive)}
                                         >
                                             {tenant.isActive ? "Deactivate" : "Activate"}
-                                            {(inActiveTenantMutation.isPending) && (
+                                            {(isInActiveTenant) && (
                                                 <Loader2 className="ml-2 h-4 w-4 animate-spin" />
                                             )}
                                         </Button>
@@ -399,11 +406,11 @@ export default function TenantPage() {
                                 Cancel
                             </Button>
 
-                            <Button type="submit" disabled={editing ? editTenantMutation.isPending : createTenantMutation.isPending}>
+                            <Button type="submit" disabled={editing ? isEditingTenant : isCreatingTenant}>
                                 {editing ? "Update" : "Create"}
-                                {editing ? editTenantMutation.isPending && (
+                                {editing ? isEditingTenant && (
                                     <Loader2 className="ml-2 h-4 w-4 animate-spin" />
-                                ) : createTenantMutation.isPending && (
+                                ) : isCreatingTenant && (
                                     <Loader2 className="ml-2 h-4 w-4 animate-spin" />
                                 )}
                             </Button>

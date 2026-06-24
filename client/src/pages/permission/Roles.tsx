@@ -35,6 +35,7 @@ import { Pencil, Plus, Search, Trash2 } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { useCreateMutationRole, useUpdateMutationRole, useDeleteMutationRole, useInActiveMutationRole, useRole } from "@/hooks/queries/useRole";
+import logger from "@/utils/logger";
 
 export default function Roles() {
 
@@ -48,10 +49,10 @@ export default function Roles() {
     const pageSize = 5;
 
     const { data: rolesData, isLoading, error } = useRole();
-    const { mutate: createRole } = useCreateMutationRole();
-    const { mutate: updateRole } = useUpdateMutationRole();
-    const { mutate: deleteRole } = useDeleteMutationRole();
-    const { mutate: inActiveRole } = useInActiveMutationRole();
+    const { mutate: createRole, isPending: isCreating, error: isCreateError } = useCreateMutationRole();
+    const { mutate: updateRole, isPending: isUpdating, error: isUpdateError } = useUpdateMutationRole();
+    const { mutate: deleteRole, isPending: isDeleting, error: isDeleteError } = useDeleteMutationRole();
+    const { mutate: inActiveRole, isPending: isInActive, error: isInActiveError } = useInActiveMutationRole();
 
     const roles = rolesData?.data ?? [];
     const pagination = rolesData?.pagination;
@@ -108,40 +109,57 @@ export default function Roles() {
 
         try {
             if (editing && editingId) {
-                await updateRole({
+                if (!editingId || !form.name) {
+                    return;
+                }
+                updateRole({
                     id: editingId,
                     name: form.name,
                     description: form.description,
+                }, {
+                    onSuccess: () => { setOpen(false); },
+                    onError: () => { },
                 });
             } else {
-                await createRole({
+                if (!form.name) {
+                    return;
+                }
+                createRole({
                     name: form.name,
                     description: form.description,
                     isSystem: false,
+                }, {
+                    onSuccess: () => { setOpen(false); },
+                    onError: () => { },
                 });
             }
 
-            setOpen(false);
         } catch (err) {
-            console.error(err);
+            logger.error(err);
         }
     };
 
     /* ---------------- DELETE ---------------- */
     const handleDelete = async (id: string) => {
         try {
-            await deleteRole(id);
+            deleteRole(id, {
+                onSuccess: () => { },
+                onError: () => { },
+            });
         } catch (err) {
-            console.error(err);
+            logger.error(err);
         }
     };
 
     /* ---------------- ACTIVE / INACTIVE ---------------- */
     const handleToggle = async (id: string) => {
         try {
-            await inActiveRole(id);
+            inActiveRole(id, {
+                onSuccess: () => { },
+                onError: () => { },
+            });
         } catch (err) {
-            console.error(err);
+            logger.error(err);
         }
     };
 

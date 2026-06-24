@@ -27,7 +27,7 @@ export class UserService {
             db
                 .select()
                 .from(users)
-                .where(and(eq(users.tenantId, tenantId!), baseFilter))
+                .where(and(eq(users.tenantId, tenantId!),eq(users.isDeleted, false), baseFilter))
                 .orderBy(desc(users.createdAt))
                 .limit(limit)
                 .offset(offset),
@@ -35,7 +35,7 @@ export class UserService {
             db
                 .select({ count: count() })
                 .from(users)
-                .where(and(eq(users.tenantId, tenantId!), baseFilter)),
+                .where(and(eq(users.tenantId, tenantId!),eq(users.isDeleted, false), baseFilter)),
         ]);
 
         const total = Number(totalResult[0].count);

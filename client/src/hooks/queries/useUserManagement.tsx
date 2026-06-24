@@ -18,6 +18,11 @@ export const useCreateUser = () => {
         mutationFn: (user: User) => createUser(user),
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['users'] });
+            toast({
+                title: "Success",
+                description: "User created successfully",
+                variant: "success",
+            });
         },
         onError: () => {
             toast({
@@ -36,6 +41,11 @@ export const useUpdateUser = () => {
         mutationFn: (user: User) => updateRole(user.id, user),
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['users'] });
+            toast({
+                title: "Success",
+                description: "User updated successfully",
+                variant: "success",
+            });
         },
         onError: () => {
             toast({
@@ -54,6 +64,11 @@ export const useDeleteUser = () => {
         mutationFn: (id: string) => deleteUser(id),
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['users'] });
+            toast({
+                title: "Success",
+                description: "User deleted successfully",
+                variant: "success",
+            });
         },
         onError: () => {
             toast({

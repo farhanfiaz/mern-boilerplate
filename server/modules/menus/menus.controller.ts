@@ -17,7 +17,16 @@ export class MenuController {
     }
     getSuperAdminMenus = async (req: Request, res: Response) => {
         const { userId, roleId } = req.query;
-        const userMenus = await this.menusService.getSuperAdminMenus(userId as string, roleId as string);
+        let userMenus;
+        if (req.user?.isSystemAdmin) {
+            userMenus = await this.menusService.getSuperAdminMenus();
+        } else {
+            if (!userId || !roleId) {
+                return sendResponse(res as Response, HttpStatusCode.BadRequest, false, "Missing required parameters");
+            }
+            userMenus = await this.menusService.getUserMenus(userId as string, roleId as string);
+        }
+
         return sendResponse(res as Response, HttpStatusCode.Ok, true, "User menus", userMenus);
     }
 }

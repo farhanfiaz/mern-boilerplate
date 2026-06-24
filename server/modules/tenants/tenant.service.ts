@@ -94,7 +94,7 @@ export class TenantService {
                     }
                 )
                 .from(tenants)
-                .leftJoin(users, eq(tenants.id, users.tenantId))
+                .leftJoin(users, and(eq(tenants.id, users.tenantId), eq(users.id, userId), eq(tenants.isActive, true), eq(tenants.isDeleted, false)))
                 //.innerJoin(roles, and(eq(roles.tenantId, tenants.id), eq(roles.id, selectedRole)))
                 .where(and(...[baseFilter, eq(users.id, userId)]))
                 .orderBy(desc(tenants.createdAt))
@@ -104,7 +104,8 @@ export class TenantService {
             db
                 .select({ count: count() })
                 .from(tenants)
-                .leftJoin(users, eq(tenants.id, users.tenantId))
+                .leftJoin(users, and(eq(tenants.id, users.tenantId), eq(users.id, userId), eq(tenants.isActive, true), eq(tenants.isDeleted, false)))
+                //.innerJoin(roles, and(eq(roles.tenantId, tenants.id), eq(roles.id, selectedRole)))
                 .where(and(...[baseFilter, eq(users.id, userId)])),
         ]);
 

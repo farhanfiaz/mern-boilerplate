@@ -35,6 +35,7 @@ import { useState } from "react";
 import { tenantSchema } from "@/validations/tenant.validations";
 import { useAllTenants } from "@/hooks/queries/useTenant";
 import { useCreateTenant, useDeleteTenant, useEditTenant, useInActivateTenant } from "@/hooks/mutations/useTenantMutations";
+import logger from "@/utils/logger";
 
 export default function TenantPage() {
     /* ---------------- MODAL ---------------- */
@@ -52,10 +53,10 @@ export default function TenantPage() {
     const tenants = data?.data ?? [];
     const pagination = data?.pagination;
 
-    const { mutate: createTenant, isPending: isCreatingTenant , error: createTenantError} = useCreateTenant();
-    const { mutate: editTenant, isPending: isEditingTenant , error: editTenantError} = useEditTenant();
-    const { mutate: deleteTenant, isPending: isDeletingTenant , error: deleteTenantError} = useDeleteTenant();
-    const { mutate: inActiveTenant, isPending: isInActiveTenant , error: inActiveTenantError} = useInActivateTenant();
+    const { mutate: createTenant, isPending: isCreatingTenant, error: createTenantError } = useCreateTenant();
+    const { mutate: editTenant, isPending: isEditingTenant, error: editTenantError } = useEditTenant();
+    const { mutate: deleteTenant, isPending: isDeletingTenant, error: deleteTenantError } = useDeleteTenant();
+    const { mutate: inActiveTenant, isPending: isInActiveTenant, error: inActiveTenantError } = useInActivateTenant();
 
     /* ---------------- FORM ---------------- */
     const [form, setForm] = useState({
@@ -140,9 +141,15 @@ export default function TenantPage() {
                     description: form.description,
                     website: form.website,
                     logo: form.logo,
+                }, {
+                    onSuccess: () => {
+                        setEditingId(null);
+                        setEditing(false);
+                        setOpen(false);
+                    },
+                    onError: () => { }
                 });
-                setEditing(false);
-                setEditingId(null);
+
             } else {
                 createTenant({
                     name: form.name,
@@ -152,17 +159,16 @@ export default function TenantPage() {
                     logo: form.logo,
                 }, {
                     onSuccess: () => {
-
+                        setOpen(false);
                     },
                     onError: () => {
-                        
+
                     },
                 });
             }
 
-            setOpen(false);
         } catch (err) {
-            console.error(err);
+            logger.error(err);
         }
     };
 
@@ -171,7 +177,7 @@ export default function TenantPage() {
         try {
             deleteTenant(id);
         } catch (err) {
-            console.error(err);
+            logger.error(err);
         }
     };
 
@@ -180,7 +186,7 @@ export default function TenantPage() {
         try {
             inActiveTenant(id);
         } catch (err) {
-            console.error(err);
+            logger.error(err);
         }
     };
 

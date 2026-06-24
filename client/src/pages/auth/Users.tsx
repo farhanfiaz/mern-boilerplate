@@ -1,5 +1,3 @@
-"use client";
-
 import { useEffect, useMemo, useState } from "react";
 
 import { Card } from "@/components/ui/card";
@@ -61,9 +59,9 @@ export default function Users() {
     });
 
     const { data, isLoading, error } = useUserManagement(page, pageSize, search, "", "");
-    const { mutate: createUser, isPending: isCreating } = useCreateUser();
-    const { mutate: updateUser, isPending: isUpdating } = useUpdateUser();
-    const { mutate: deleteUser, isPending: isDeleting } = useDeleteUser();
+    const { mutate: createUser, isPending: isCreating, error: createError } = useCreateUser();
+    const { mutate: updateUser, isPending: isUpdating, error: updateError } = useUpdateUser();
+    const { mutate: deleteUser, isPending: isDeleting, error: deleteError } = useDeleteUser();
 
     const users = data?.users ?? [];
     const totalPages = data?.totalPages ?? 1;
@@ -113,18 +111,24 @@ export default function Users() {
 
                 if (!existingUser) return;
 
-                await updateUser({
+                updateUser({
                     ...existingUser,
                     ...form,
+                },{
+                    onSuccess: () => {},
+                    onError: (error) => {}
                 });
             } else {
-                await createUser({
+                createUser({
                     id: "",
                     image: "",
                     isActive: true,
                     isDeleted: false,
                     createdAt: new Date().toISOString(),
                     ...form,
+                },{
+                    onSuccess: () => {},
+                    onError: (error) => {}
                 });
             }
 
@@ -140,9 +144,14 @@ export default function Users() {
         if (!deleteId) return;
 
         try {
-            await deleteUser(deleteId);
-
-            setDeleteId(null);
+            deleteUser(deleteId, {
+                onSuccess: () => {
+                    setDeleteId(null);
+                },
+                onError: (error) => {
+                    logger.error(error);
+                }
+            });
         } catch (error) {
             logger.error(error);
         }

@@ -148,7 +148,7 @@ export function Sidebar() {
                                 {menus
                                     ?.filter(
                                         (item: any) =>
-                                            item.groupLabel === group && item.isAction === false
+                                            item.groupLabel === group && item.isAction === false && item.parentId == null
                                     )
                                     .map((item: any) => {
                                         if (!item.url) return null;

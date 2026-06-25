@@ -4,6 +4,7 @@ dotenv.config();
 const env = process.env.NODE_ENV || "development";
 
 const config = {
+  isDemoMode: process.env.VITE_DEMO_MODE === "true",
   environment: env,
   isDevelopment: env == "development",
   isProduction: env == "production",
@@ -22,9 +23,9 @@ const config = {
   },
   frontend: {
     urls: process.env.VITE_FRONTEND_URL?.split(',')
-    .map(url => url.trim()),
+      .map(url => url.trim()),
   },
-  SESSION_KEY:process.env.VITE_SESSION_KEY!
+  SESSION_KEY: process.env.VITE_SESSION_KEY!
 };
 
 export default config;

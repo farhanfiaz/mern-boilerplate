@@ -3,6 +3,7 @@ import { getSessionKey } from "@/crypto/session";
 import { encrypt, decrypt } from "@/crypto/aes";
 import { AuthResponse } from "@/types/auth.types";
 import logger from "./logger";
+import { isDemoMode } from "./isDemoMode";
 
 const STORAGE_KEY = ENDPOINTS.LOCALSTORAGE.USER;
 const SELECTED_ROLE_KEY = ENDPOINTS.LOCALSTORAGE.SELECTED_ROLE;
@@ -13,6 +14,9 @@ export async function getStoredAuth(): Promise<AuthResponse | null> {
     if (!raw) return null;
 
     try {
+        if (isDemoMode()) {
+            return JSON.parse(raw);
+        }
         return await decrypt(
             getSessionKey(),
             JSON.parse(raw)
@@ -29,6 +33,13 @@ export async function getStoredAuth(): Promise<AuthResponse | null> {
 export async function saveStoredAuth(
     auth: AuthResponse
 ): Promise<void> {
+    if (isDemoMode()) {
+        localStorage.setItem(
+            STORAGE_KEY,
+            JSON.stringify(auth)
+        );
+        return;
+    }
     const encrypted = await encrypt(
         getSessionKey(),
         auth
@@ -76,6 +87,9 @@ export class TenantStorage {
         if (!raw) return null;
 
         try {
+            if (isDemoMode()) {
+                return JSON.parse(raw);
+            }
             return await decrypt(
                 getSessionKey(),
                 JSON.parse(raw)
@@ -92,6 +106,14 @@ export class TenantStorage {
     static async saveStoredAuth(
         auth: AuthResponse
     ): Promise<void> {
+        if (isDemoMode()) {
+            localStorage.setItem(
+                this.STORAGE_KEY,
+                JSON.stringify(auth)
+            );
+            return;
+        }
+
         const encrypted = await encrypt(
             getSessionKey(),
             auth

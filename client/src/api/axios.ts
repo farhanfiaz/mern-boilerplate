@@ -15,6 +15,7 @@ import {
 
 import { getSessionKey } from "@/crypto/session";
 import { applyAuthHeaders } from "@/api/applyAuthHeaders";
+import { isDemoMode } from "@/utils/isDemoMode";
 
 const axiosInstance = axios.create({
   baseURL: import.meta.env.VITE_API_URL ?? "/",
@@ -37,6 +38,9 @@ const processQueue = (error: any, token: string | null = null) => {
 
 const getKeySafe = () => {
   try {
+    if (isDemoMode()) {
+      return null; // demo mode
+    }
     return getSessionKey();
   } catch (e) {
     logger.error("Session key not ready", e);
@@ -62,6 +66,10 @@ axiosInstance.interceptors.request.use(async (config) => {
 
     if (!isEncrypted) {
       const key = getKeySafe();
+      if (!key) {
+        // DEMO MODE: skip encryption
+        return config;
+      }
       config.data = await encrypt(key, config.data);
     }
   }
@@ -73,7 +81,9 @@ axiosInstance.interceptors.request.use(async (config) => {
 axiosInstance.interceptors.response.use(
   async (response) => {
     const key = getKeySafe();
-
+    if (!key) {
+      return response.data; // DEMO MODE: no decrypt
+    }
     if (response.data?.iv && response.data?.data) {
       response.data = await decrypt(key, response.data);
     }
@@ -84,7 +94,7 @@ axiosInstance.interceptors.response.use(
   async (error) => {
     const key = getKeySafe();
 
-    if (error.response?.data?.iv && error.response?.data?.data) {
+    if (key && error.response?.data?.iv && error.response?.data?.data) {
       error.response.data = await decrypt(
         key,
         error.response.data

@@ -4,6 +4,9 @@ import crypto from "crypto";
 const key = Buffer.from(config.SESSION_KEY!, "base64");
 
 export function encryptResponse(req: any, res: any, next: any) {
+  if(config.isDemoMode) {
+      return next();
+    }
   const originalJson = res.json.bind(res);
 
   res.json = (body: any) => {

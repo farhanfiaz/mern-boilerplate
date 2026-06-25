@@ -21,8 +21,9 @@ app.set("trust proxy", 1);
 app.use(
   helmet({
     contentSecurityPolicy:
-      appConfig.isProduction
-        ? {
+      (appConfig.isDemoMode == true)
+        ? false
+        : {
           directives: {
             defaultSrc: ["'self'"],
             styleSrc: ["'self'", "'unsafe-inline'"],
@@ -31,12 +32,12 @@ app.use(
             connectSrc: ["'self'", "wss:", "ws:"],
             fontSrc: ["'self'"],
             objectSrc: ["'none'"],
-            mediaSrc: ["'self'"],
+            mediaSrc: ["'self'", "data:"],
             frameSrc: ["'none'"],
           },
-        }
-        : false,
+        },
     crossOriginEmbedderPolicy: false,
+    crossOriginOpenerPolicy: false,
   })
 );
 

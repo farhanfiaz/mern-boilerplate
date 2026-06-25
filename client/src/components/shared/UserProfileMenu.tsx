@@ -9,7 +9,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/Button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Link } from "react-router-dom";
+import { Link } from "wouter";
 import { LogOut, User, Lock, ChevronDown } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -72,12 +72,12 @@ export function UserProfileMenu() {
                         </div>
                     </DropdownMenuLabel>
                     <DropdownMenuSeparator />
-                    {/* <DropdownMenuItem asChild>
+                    <DropdownMenuItem asChild>
                         <Link to="/profile" className="flex items-center cursor-pointer">
                             <User className="mr-2 h-4 w-4" />
                             <span>Profile</span>
                         </Link>
-                    </DropdownMenuItem> */}
+                    </DropdownMenuItem>
                     <DropdownMenuItem
                         onClick={() => setIsPasswordOpen(true)}
                         className="cursor-pointer"

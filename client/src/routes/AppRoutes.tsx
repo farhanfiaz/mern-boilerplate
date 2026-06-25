@@ -14,6 +14,7 @@ import RoleAccess from "@/pages/permission/RoleAccess";
 import Users from "@/pages/auth/Users";
 import { getSelectedRole } from "@/utils/auth-storage";
 import NotFound from "@/pages/NotFound";
+import UserProfile from "@/components/shared/User-Profile";
 
 export default function AppRoutes() {
   const { user } = useAuth();
@@ -84,6 +85,14 @@ export default function AppRoutes() {
         <AdminLayout>
           <ProtectedRoute>
             <Users />
+          </ProtectedRoute>
+        </AdminLayout>
+      </Route>
+
+      <Route path="/profile">
+        <AdminLayout>
+          <ProtectedRoute>
+            <UserProfile />
           </ProtectedRoute>
         </AdminLayout>
       </Route>

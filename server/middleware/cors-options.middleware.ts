@@ -4,7 +4,8 @@ import logger from "@server/utils/logger";
 export const corsOptions = {
     origin: function (origin: string | undefined, callback: (err: Error | null, allow?: boolean) => void) {
         const allowedOrigins = config.frontend.urls || [];
-
+        logger.info(`[CORS] Incoming request from origin: ${origin || 'No origin (e.g., Postman or mobile app)'}`);
+        logger.info(`[CORS] Allowed origins: ${allowedOrigins.join(', ')}`);
         // Allow requests with no origin (mobile apps, Postman, etc.)
         if (!origin) return callback(null, true);
 

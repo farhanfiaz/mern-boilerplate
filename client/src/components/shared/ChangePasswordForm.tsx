@@ -1,13 +1,14 @@
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useMutation } from "@tanstack/react-query";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/input";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { useState } from "react";
-import { Eye, EyeOff } from "lucide-react";
+import { Eye, EyeOff, User } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { useChangePasswordMutation } from "@/hooks/mutations/useUserMutation";
+import { useAuth } from "@/context/AuthContext";
 
 const changePasswordSchema = z.object({
     currentPassword: z.string().min(1, "Current password is required"),
@@ -23,7 +24,7 @@ interface ChangePasswordFormProps {
     onClose: () => void;
 }
 export function ChangePasswordForm({ onClose }: ChangePasswordFormProps) {
-    const { toast } = useToast();
+    const { user } = useAuth();
     const [showCurrentPassword, setShowCurrentPassword] = useState(false);
     const [showNewPassword, setShowNewPassword] = useState(false);
     const [showConfirmPassword, setShowConfirmPassword] = useState(false);
@@ -36,31 +37,26 @@ export function ChangePasswordForm({ onClose }: ChangePasswordFormProps) {
             confirmPassword: "",
         },
     });
-
-    const changePasswordMutation = useMutation({
-        mutationFn: async (data: ChangePasswordFormData) => {
-            //await AuthService.changePassword(data.currentPassword, data.newPassword);
-        },
-        onSuccess: () => {
-            toast({
-                title: "Password Changed",
-                description: "Your password has been updated successfully.",
-                className: "bg-green-500 text-white",
-            });
-            form.reset();
-            onClose();
-        },
-        onError: (error: any) => {
-            toast({
-                title: "Password Change Failed",
-                description: error.message || "Failed to change password",
-                className: "bg-red-500 text-white",
-            });
-        },
-    });
+    const {
+        mutate: changePassword,
+        isPending: isChangePassword,
+        error: changePasswordError,
+    } = useChangePasswordMutation();
 
     const onSubmit = (data: ChangePasswordFormData) => {
-        changePasswordMutation.mutate(data);
+        changePassword({
+            userId: user?.user.userId ?? "",
+            currentPassword: data.currentPassword,
+            confirmPassword: data.confirmPassword,
+            newPassword: data.newPassword
+        }, {
+            onSuccess: () => {
+                form.reset();
+                onClose();
+            }, onError: () => {
+
+            }
+        });
     };
 
     return (
@@ -172,9 +168,9 @@ export function ChangePasswordForm({ onClose }: ChangePasswordFormProps) {
                     <Button
                         type="submit"
                         className="w-full sm:w-auto flex items-center gap-2 shadow-lg hover:shadow-xl transition-all hover:scale-105 duration-200 bg-violet-700 text-white"
-                        disabled={changePasswordMutation.isPending}
+                        disabled={isChangePassword}
                     >
-                        {changePasswordMutation.isPending ? "Changing..." : "Change Password"}
+                        {isChangePassword ? "Changing..." : "Change Password"}
                     </Button>
                 </div>
             </form>

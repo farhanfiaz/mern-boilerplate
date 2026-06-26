@@ -32,3 +32,41 @@ export const authRefreshToken = async (refreshToken: string): Promise<AuthRespon
   }
   return response.data;
 };
+
+export const changePasswordByUserId = async ({
+  userId,
+  currentPassword,
+  confirmPassword,
+  newPassword,
+}: {
+  userId: string;
+  currentPassword: string;
+  confirmPassword: string;
+  newPassword: string;
+}): Promise<AuthResponse> => {
+  const response = await http.post<AuthResponse>(`${ENDPOINTS.USER_MANAGEMENT.CHANGEPASSWORD}/${userId}`, {
+    currentPassword,
+    confirmPassword,
+    newPassword,
+  });
+  if (!response.success) {
+    throw new Error(response.message);
+  }
+  return response.data;
+};
+
+export const resetPasswordByUserId = async ({
+  userId,
+  resetPassword,
+}: {
+  userId: string;
+  resetPassword: string;
+}): Promise<AuthResponse> => {
+  const response = await http.post<AuthResponse>(`${ENDPOINTS.USER_MANAGEMENT.RESETPASSWORD}/${userId}`, {
+    resetPassword
+  });
+  if (!response.success) {
+    throw new Error(response.message);
+  }
+  return response.data;
+};

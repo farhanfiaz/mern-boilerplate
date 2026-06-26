@@ -10,6 +10,8 @@ router.put("/update-user/:id", userController.updateUser);
 router.delete("/delete-user/:id", userController.deleteUser);
 router.put("/in-active-user/:id", userController.inActiveUser);
 router.get("/get-user-by-id/:id", userController.getUserById);
+router.post("/change-password/:id", userController.changePassword);
+router.post("/reset-password/:id",userController.resetPassword);
 
 
 

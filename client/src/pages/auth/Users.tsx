@@ -32,12 +32,14 @@ import {
     AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 
-import { Pencil, Plus, Search, Trash2 } from "lucide-react";
+import { Copy, Eye, EyeOff, KeyRound, Pencil, Plus, Search, ShieldCheck, Trash2 } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { getInitials } from "@/utils/utils";
 import { User } from "@/types/user-management/user-management.types";
 import logger from "@/utils/logger";
 import { useUserManagement, useCreateUser, useUpdateUser, useDeleteUser } from "@/hooks/queries/useUserManagement";
+import { useResetPasswordMutation } from "@/hooks/mutations/useUserMutation";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 
 export default function Users() {
 
@@ -62,6 +64,12 @@ export default function Users() {
     const { mutate: createUser, isPending: isCreating, error: createError } = useCreateUser();
     const { mutate: updateUser, isPending: isUpdating, error: updateError } = useUpdateUser();
     const { mutate: deleteUser, isPending: isDeleting, error: deleteError } = useDeleteUser();
+    const { mutate: resetPassword, isPending: isResetPassword, error: isResetPasswordError } = useResetPasswordMutation();
+
+    const [passwordDialogOpen, setPasswordDialogOpen] = useState(false);
+    const [generatedPassword, setGeneratedPassword] = useState("");
+    const [showPassword, setShowPassword] = useState(false);
+    const [copied, setCopied] = useState(false);
 
     const users = data?.users ?? [];
     const totalPages = data?.totalPages ?? 1;
@@ -114,9 +122,9 @@ export default function Users() {
                 updateUser({
                     ...existingUser,
                     ...form,
-                },{
-                    onSuccess: () => {},
-                    onError: (error) => {}
+                }, {
+                    onSuccess: () => { },
+                    onError: (error) => { }
                 });
             } else {
                 createUser({
@@ -126,9 +134,9 @@ export default function Users() {
                     isDeleted: false,
                     createdAt: new Date().toISOString(),
                     ...form,
-                },{
-                    onSuccess: () => {},
-                    onError: (error) => {}
+                }, {
+                    onSuccess: () => { },
+                    onError: (error) => { }
                 });
             }
 
@@ -157,6 +165,30 @@ export default function Users() {
         }
     };
 
+    const handleResetPassword = (user: User) => {
+        if (!user.id) return;
+        resetPassword({
+            userId: user.id,
+            resetPassword: "",
+        }, {
+            onSuccess: (res) => {
+                logger.info(`responce: ${res}`);
+                setGeneratedPassword(String(res));
+                setPasswordDialogOpen(true);
+            },
+            onError: (err) => {
+                logger.error(err);
+            }
+        });
+    };
+    const copyPassword = async () => {
+        await navigator.clipboard.writeText(generatedPassword);
+        setCopied(true);
+
+        setTimeout(() => {
+            setCopied(false);
+        }, 2000);
+    };
     /* ---------------- UI ---------------- */
 
     return (
@@ -240,6 +272,14 @@ export default function Users() {
                                     </TableCell>
 
                                     <TableCell className="text-right space-x-2">
+                                        <Button
+                                            size="icon"
+                                            variant="secondary"
+                                            onClick={() => handleResetPassword(user)}
+                                            disabled={isResetPassword}
+                                        >
+                                            <KeyRound className="h-4 w-4" />
+                                        </Button>
                                         <Button
                                             size="icon"
                                             variant="outline"
@@ -372,6 +412,106 @@ export default function Users() {
                 </AlertDialogContent>
 
             </AlertDialog>
+
+            {/* ------------- reset password ----------- */}
+            <Dialog
+                open={passwordDialogOpen}
+                onOpenChange={setPasswordDialogOpen}
+            >
+                <DialogContent className="sm:max-w-md">
+
+                    <DialogHeader>
+
+                        <DialogTitle className="flex items-center gap-2">
+
+                            <ShieldCheck className="h-5 w-5 text-green-600" />
+
+                            Password Reset Successful
+
+                        </DialogTitle>
+
+                        <p className="text-sm text-gray-500 mt-1">
+                            A new secure password has been generated for the user.
+                        </p>
+
+                    </DialogHeader>
+
+                    <div className="rounded-lg border border-green-200 bg-green-50 p-4">
+
+                        <label className="text-sm font-semibold text-green-700">
+                            New Password
+                        </label>
+
+                        <div className="flex gap-2 mt-2">
+
+                            <Input
+                                value={generatedPassword}
+                                readOnly
+                                type={showPassword ? "text" : "password"}
+                            />
+
+                            <Button
+                                type="button"
+                                variant="outline"
+                                size="icon"
+                                onClick={() =>
+                                    setShowPassword(!showPassword)
+                                }
+                            >
+                                {showPassword ? (
+                                    <EyeOff className="h-4 w-4" />
+                                ) : (
+                                    <Eye className="h-4 w-4" />
+                                )}
+                            </Button>
+
+                            <Button
+                                type="button"
+                                variant="outline"
+                                size="icon"
+                                onClick={copyPassword}
+                            >
+                                <Copy className="h-4 w-4" />
+                            </Button>
+
+                        </div>
+
+                        {copied && (
+                            <p className="text-green-600 text-xs mt-2">
+                                Password copied!
+                            </p>
+                        )}
+
+                    </div>
+
+                    <Alert className="bg-orange-50 border-orange-200">
+
+                        <AlertDescription>
+
+                            <span className="font-semibold text-orange-700">
+                                Important:
+                            </span>{" "}
+
+                            Please share this password securely with the user.
+                            They should change it after their first login for
+                            security.
+
+                        </AlertDescription>
+
+                    </Alert>
+
+                    <div className="flex justify-end">
+
+                        <Button
+                            onClick={() => setPasswordDialogOpen(false)}
+                        >
+                            I've Saved the Password
+                        </Button>
+
+                    </div>
+
+                </DialogContent>
+            </Dialog>
 
         </div>
     );

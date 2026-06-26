@@ -1,5 +1,6 @@
 import { db } from "@server/db/connection";
 import { userRoles, users } from "@server/db/schema";
+import bcrypt from "bcryptjs";
 import { count, desc, eq, ilike, and, or } from "drizzle-orm";
 
 export class UserService {
@@ -27,7 +28,7 @@ export class UserService {
             db
                 .select()
                 .from(users)
-                .where(and(eq(users.tenantId, tenantId!),eq(users.isDeleted, false), baseFilter))
+                .where(and(eq(users.tenantId, tenantId!), eq(users.isDeleted, false), baseFilter))
                 .orderBy(desc(users.createdAt))
                 .limit(limit)
                 .offset(offset),
@@ -35,7 +36,7 @@ export class UserService {
             db
                 .select({ count: count() })
                 .from(users)
-                .where(and(eq(users.tenantId, tenantId!),eq(users.isDeleted, false), baseFilter)),
+                .where(and(eq(users.tenantId, tenantId!), eq(users.isDeleted, false), baseFilter)),
         ]);
 
         const total = Number(totalResult[0].count);
@@ -128,5 +129,91 @@ export class UserService {
             throw new Error("User not found");
         }
         return user;
+    }
+
+    changePassword = async ({
+        userId,
+        currentPassword,
+        confirmPassword,
+        newPassword,
+    }: {
+        userId: string;
+        currentPassword: string;
+        confirmPassword: string;
+        newPassword: string;
+    }) => {
+        if (!currentPassword) {
+            throw new Error("Current password is required.");
+        }
+
+        if (!newPassword || !confirmPassword) {
+            throw new Error("New password and confirm password are required.");
+        }
+
+        if (newPassword !== confirmPassword) {
+            throw new Error("New password and confirm password do not match.");
+        }
+
+        const user = await db.query.users.findFirst({
+            where: (users, { eq }) => eq(users.id, userId),
+        });
+
+        if (!user) {
+            throw new Error("User not found.");
+        }
+
+        // Verify current password
+        const isPasswordCorrect = await bcrypt.compare(
+            currentPassword,
+            user.password ?? ""
+        );
+
+        if (!isPasswordCorrect) {
+            throw new Error("Current password is incorrect.");
+        }
+
+        // Optional: prevent using the same password again
+        const isSamePassword = await bcrypt.compare(
+            newPassword,
+            user.password ?? ""
+        );
+
+        if (isSamePassword) {
+            throw new Error("New password must be different from the current password.");
+        }
+
+        // Hash new password
+        const hashedPassword = await bcrypt.hash(newPassword, 10);
+
+        await db
+            .update(users)
+            .set({
+                password: hashedPassword,
+            })
+            .where(eq(users.id, userId));
+
+    };
+
+    resetPassword = async (userId: string): Promise<string> => {
+        const user = await db.query.users.findFirst({
+            where: (users, { eq }) => eq(users.id, userId),
+        });
+
+        if (!user) {
+            throw new Error("User not found.");
+        }
+
+        const temporaryPassword = Math.random().toString(36).slice(-10);
+
+        const hashedPassword = await bcrypt.hash(temporaryPassword, 10);
+
+        await db
+            .update(users)
+            .set({
+                password: hashedPassword,
+            })
+            .where(eq(users.id, userId));
+
+        return temporaryPassword;
     }
 }

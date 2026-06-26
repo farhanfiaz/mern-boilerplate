@@ -44,6 +44,8 @@ export const ENDPOINTS = {
     UPDATE_USER: `${PREFIX}/user/update-user`,
     DELETE_USER: `${PREFIX}/user/delete-user`,
     IN_ACTIVE_USER: `${PREFIX}/user/in-active-user`,
+    CHANGEPASSWORD: `${PREFIX}/user/change-password`,
+    RESETPASSWORD: `${PREFIX}/user/reset-password`,
   },
   ROLE_ACCESS: {
     SAVE_ROLE_ACCESS: `${PREFIX}/role-access/save-role-access`,

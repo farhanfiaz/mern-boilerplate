@@ -3,11 +3,14 @@ import { AuthService } from "./auth.service";
 import { HttpStatusCode } from "@server/utils/httpStatusCode";
 import { Response } from "express";
 import { Request } from "express";
+import { TenantService } from "../tenants/tenant.service";
 
 export class AuthController {
     private authService: AuthService;
+    private tenantService: TenantService;
     constructor() {
         this.authService = new AuthService();
+        this.tenantService = new TenantService();
     }
     login = async (req: Request, res: Response) => {
         const { email, password } = req.body;
@@ -21,14 +24,25 @@ export class AuthController {
         return sendResponse(res as Response, HttpStatusCode.OK, true, "Login successful", user);
     }
     register = async (req: Request, res: Response) => {
-        const { email, password, firstName, lastName } = req.body;
+        const { email, password, firstName, lastName, tenantName, tenantDescription, tenantWebsite,tenantSlug } = req.body;
         const userImage = req.file;
+        if (!tenantName || !tenantDescription || !tenantWebsite || !tenantSlug) {
+            return sendResponse(res as Response, HttpStatusCode.BAD_REQUEST, false, "Tenant name, slug and type are required", []);
+        }
+        const tenant = await this.tenantService.createTenant({
+            name: tenantName,
+            slug: tenantSlug,
+            description: tenantDescription,
+            website: tenantWebsite,
+            logo: '',
+        });
         const user = await this.authService.register({
             email,
             file: userImage ?? null,
             firstName,
             lastName,
-            password
+            password,
+            tenantId: tenant.id ?? null
         });
         return sendResponse(res as Response, HttpStatusCode.OK, true, "User register successful", user);
     }

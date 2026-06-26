@@ -115,6 +115,10 @@ export const AuthProvider = ({ children }: Props) => {
       try {
         const resp = await authRegister(userData);
 
+        if (resp.user?.role?.length === 1) {
+          setSelectedRole(resp.user.role[0].id);
+        }
+        
         setUser(resp);
 
         await saveStoredAuth(resp);

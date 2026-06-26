@@ -10,6 +10,7 @@ import { Input } from "@/components/ui/input";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
+import { Link } from "wouter";
 
 /* ---------------- Schema ---------------- */
 
@@ -164,6 +165,12 @@ export default function Login() {
                                 </Button>
 
                                 {/* FOOTER */}
+                                <p className="text-center text-xs text-gray-400 mt-6">
+                                    Don't have an account?{" "}
+                                    <Link to="/register" className="text-purple-600 hover:underline">
+                                        Create one
+                                    </Link>
+                                </p>
                                 <p className="text-center text-xs text-gray-400 mt-6">
                                     © {new Date().getFullYear()} Your Company. All rights reserved.
                                 </p>

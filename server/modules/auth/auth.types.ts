@@ -9,6 +9,7 @@ export type RegisterDto = {
   firstName: string;
   lastName: string;
   file: Express.Multer.File | null;
+  tenantId: string;
 };
 
 export type AuthResponse = {

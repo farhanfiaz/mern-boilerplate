@@ -1,102 +1,233 @@
-import { useState, FormEvent } from "react";
-import { useNavigate, Link, Navigate } from "react-router-dom";
+import { useState, useRef } from "react";
 import { useAuth } from "../../context/AuthContext";
-import { RegisterUser } from "@/types/auth.types";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/Button";
+import { Label } from "@/components/ui/label";
+import { Link, useLocation } from "wouter";
+import { Camera } from "lucide-react";
+import { RegisterForm, registerSchema } from "@/validations/register.validation";
+
 
 export default function Register() {
-  const { register, user } = useAuth();
-  const [firstName, setFirstName] = useState<string>("");
-  const [lastName, setLastName] = useState<string>("");
-  const [email, setEmail] = useState<string>("");
-  const [password, setPassword] = useState<string>("");
+  const { register: registerUser, user } = useAuth();
+  const [, setLocation] = useLocation();
+  const [loading, setLoading] = useState(false);
+
+  const avatarRef = useRef<HTMLInputElement>(null);
+  const logoRef = useRef<HTMLInputElement>(null);
+
+  const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
+  const [logoPreview, setLogoPreview] = useState<string | null>(null);
+
+  const form = useForm<RegisterForm>({
+    resolver: zodResolver(registerSchema),
+    defaultValues: {
+      tenantName: "",
+      tenantSlug: "",
+      tenantDescription: "",
+      tenantWebsite: "",
+      firstName: "",
+      lastName: "",
+      email: "",
+      password: "",
+    },
+  });
 
   if (user) {
-    return <Navigate to="/dashboard" replace />;
+    setLocation("/dashboard");
+    return null;
   }
 
-  const handleSubmit = (e: FormEvent) => {
-    e.preventDefault();
-    const registerUser: RegisterUser = {
-      firstName: firstName,
-      lastName: lastName,
-      email: email,
-      password: password
-    };
-    register(registerUser);
+  /* ---------------- Image Handlers ---------------- */
+
+  const handleAvatar = (e: any) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (avatarPreview) URL.revokeObjectURL(avatarPreview);
+
+    const url = URL.createObjectURL(file);
+    setAvatarPreview(url);
+    form.setValue("avatar", file);
   };
 
+  const handleLogo = (e: any) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (logoPreview) URL.revokeObjectURL(logoPreview);
+
+    const url = URL.createObjectURL(file);
+    setLogoPreview(url);
+    form.setValue("tenantLogo", file);
+  };
+
+  /* ---------------- Submit ---------------- */
+
+  const onSubmit = async (data: RegisterForm) => {
+    try {
+      setLoading(true);
+
+      const formData = new FormData();
+
+      // Tenant
+      formData.append("tenantName", data.tenantName);
+      formData.append("tenantSlug", data.tenantSlug || "");
+      formData.append("tenantDescription", data.tenantDescription || "");
+      formData.append("tenantWebsite", data.tenantWebsite || "");
+
+      if (data.tenantLogo) {
+        formData.append("tenantLogo", data.tenantLogo);
+      }
+
+      // User
+      formData.append("firstName", data.firstName);
+      formData.append("lastName", data.lastName);
+      formData.append("email", data.email);
+      formData.append("password", data.password);
+
+      if (data.avatar) {
+        formData.append("avatar", data.avatar);
+      }
+
+      await registerUser(formData as any);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  /* ---------------- UI ---------------- */
+
   return (
-    <div style={styles.container}>
-      <form onSubmit={handleSubmit} style={styles.card}>
-        <h2>Register</h2>
+    <div className="min-h-screen flex items-center justify-center bg-gray-100 p-6">
 
-        <input
-          placeholder="first name"
-          value={firstName}
-          onChange={(e) => setFirstName(e.target.value)}
-          style={styles.input}
-        />
+      <div className="w-full max-w-5xl bg-white shadow-xl rounded-2xl overflow-hidden grid grid-cols-1 md:grid-cols-2">
 
-        <input
-          placeholder="last name"
-          value={lastName}
-          onChange={(e) => setLastName(e.target.value)}
-          style={styles.input}
-        />
+        {/* ================= LEFT: TENANT ================= */}
+        <div className="p-8 border-r bg-gradient-to-b from-purple-50 to-white">
 
-        <input
-          type="email"
-          placeholder="Email"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-          style={styles.input}
-        />
+          <h2 className="text-xl font-bold mb-6">🏢 Tenant Information</h2>
 
-        <input
-          type="password"
-          placeholder="Password"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-          style={styles.input}
-        />
+          {/* Logo */}
+          <div className="flex justify-center mb-6">
+            <div className="relative w-24 h-24">
 
-        <button style={styles.button}>Register</button>
+              <input type="file" ref={logoRef} hidden onChange={handleLogo} />
 
-        <p>
-          Already have an account? <Link to="/login">Login</Link>
-        </p>
-      </form>
+              <div
+                onClick={() => logoRef.current?.click()}
+                className="w-24 h-24 rounded-xl border bg-white flex items-center justify-center cursor-pointer overflow-hidden"
+              >
+                {logoPreview ? (
+                  <img src={logoPreview} className="w-full h-full object-cover" />
+                ) : (
+                  <span className="text-xs text-gray-400">Upload Logo</span>
+                )}
+              </div>
+            </div>
+          </div>
+
+          <div className="space-y-4">
+
+            <div>
+              <Label>Tenant Name</Label>
+              <Input {...form.register("tenantName")} />
+            </div>
+
+            <div>
+              <Label>Slug</Label>
+              <Input {...form.register("tenantSlug")} />
+            </div>
+
+            <div>
+              <Label>Description</Label>
+              <Input {...form.register("tenantDescription")} />
+            </div>
+
+            <div>
+              <Label>Website</Label>
+              <Input {...form.register("tenantWebsite")} />
+            </div>
+
+          </div>
+        </div>
+
+        {/* ================= RIGHT: USER ================= */}
+        <div className="p-8">
+
+          <h2 className="text-xl font-bold mb-6">👤 Owner Information</h2>
+
+          {/* Avatar */}
+          <div className="flex justify-center mb-6">
+            <div className="relative w-28 h-28">
+
+              <input type="file" ref={avatarRef} hidden onChange={handleAvatar} />
+
+              <div
+                onClick={() => avatarRef.current?.click()}
+                className="w-28 h-28 rounded-full border-4 border-purple-500 overflow-hidden cursor-pointer bg-gray-200"
+              >
+                {avatarPreview ? (
+                  <img src={avatarPreview} className="w-full h-full object-cover" />
+                ) : (
+                  <div className="w-full h-full flex items-center justify-center text-gray-400 text-xs">
+                    Avatar
+                  </div>
+                )}
+              </div>
+
+              <button
+                type="button"
+                onClick={() => avatarRef.current?.click()}
+                className="absolute bottom-1 right-1 bg-black text-white p-2 rounded-full"
+              >
+                <Camera size={14} />
+              </button>
+
+            </div>
+          </div>
+
+          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <Label>First Name</Label>
+                <Input {...form.register("firstName")} />
+              </div>
+
+              <div>
+                <Label>Last Name</Label>
+                <Input {...form.register("lastName")} />
+              </div>
+            </div>
+
+            <div>
+              <Label>Email</Label>
+              <Input {...form.register("email")} />
+            </div>
+
+            <div>
+              <Label>Password</Label>
+              <Input type="password" {...form.register("password")} />
+            </div>
+
+            <Button className="w-full mt-4" disabled={loading}>
+              {loading ? "Creating workspace..." : "Create Workspace"}
+            </Button>
+
+            <p className="text-sm text-center mt-3">
+              Already have account?{" "}
+              <Link to="/login" className="text-purple-600">
+                Login
+              </Link>
+            </p>
+
+          </form>
+
+        </div>
+      </div>
     </div>
   );
 }
-
-const styles: Record<string, React.CSSProperties> = {
-  container: {
-    height: "100vh",
-    display: "flex",
-    justifyContent: "center",
-    alignItems: "center",
-    background: "#eef2f3",
-  },
-  card: {
-    width: "320px",
-    padding: "20px",
-    background: "#fff",
-    borderRadius: "10px",
-    display: "flex",
-    flexDirection: "column",
-    gap: "10px",
-  },
-  input: {
-    padding: "10px",
-    border: "1px solid #ccc",
-    borderRadius: "5px",
-  },
-  button: {
-    padding: "10px",
-    background: "#2563eb",
-    color: "#fff",
-    border: "none",
-    cursor: "pointer",
-  },
-};

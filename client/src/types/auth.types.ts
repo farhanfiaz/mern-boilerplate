@@ -8,6 +8,11 @@ export interface RegisterUser {
   password: string;
   firstName: string;
   lastName: string;
+  avatar: string;
+  tenantName: string;
+  tenantDescription: string;
+  tenantWebsite: string;
+  tenantLogo: string;
 }
 
 export type AuthResponse = {

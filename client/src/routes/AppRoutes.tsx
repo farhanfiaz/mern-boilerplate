@@ -31,6 +31,9 @@ export default function AppRoutes() {
           <Redirect to="/dashboard" />
         )}
       </Route>
+      <Route path="/register">
+        <Register />
+      </Route>
       <Route path="/dashboard">
         <AdminLayout>
           <ProtectedRoute>
@@ -43,10 +46,6 @@ export default function AppRoutes() {
         <ProtectedRoute menuByPass={!selectedRole}>
           <MultipleRole />
         </ProtectedRoute>
-      </Route>
-
-      <Route path="/register">
-        <Register />
       </Route>
 
       <Route path="/tenant">

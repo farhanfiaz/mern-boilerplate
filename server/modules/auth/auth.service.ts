@@ -1,6 +1,6 @@
 import { db } from "@server/db/connection";
 import { AuthResponse, JWTTokenUserInfo, LoginDto, RegisterDto } from "./auth.types";
-import { menus, userRoles, users } from "@server/db/schema";
+import { menus, roleMenus, roles, userRoles, users } from "@server/db/schema";
 import { eq, and, asc } from "drizzle-orm";
 import bcrypt from "bcryptjs";
 import jwt, { Secret, SignOptions } from "jsonwebtoken";
@@ -157,11 +157,19 @@ export class AuthService {
             throw new Error("user email already used..!");
         }
         const defaultRole = await db.query.roles.findFirst({
-            where: (role, { eq }) => (eq(role.name, RoleName.User))
+            where: (role, { eq }) => (eq(role.name, RoleName.Admin))
         });
         if (!defaultRole) {
             throw new Error("Default role not found");
         }
+        const [newRole] = await db.insert(roles).values({
+            tenantId: data.tenantId,
+            name: defaultRole.name,
+            description: defaultRole.description,
+            isActive: true,
+            isDeleted: false,
+            isSystem: false
+        }).returning();
         const hashedPassword = await bcrypt.hash(data.password, 10);
         const [newUser] = await db
             .insert(users)
@@ -171,14 +179,32 @@ export class AuthService {
                 firstName: data.firstName,
                 lastName: data.lastName,
                 avatarUrl: data.file?.filename ?? null,
-                username: data.email
+                username: data.email,
+                tenantId: data.tenantId
             })
             .returning();
         await db.insert(userRoles).values({
             userId: newUser.id,
-            roleId: defaultRole.id,
+            roleId: newRole.id,
             assignedAt: new Date()
         });
+        const menusIds = await db
+            .select({
+                id: menus.id,
+            })
+            .from(menus)
+            .where(eq(menus.isActive, true));
+
+        await Promise.all(
+            menusIds.map((menu) =>
+                db.insert(roleMenus).values({
+                    roleId: newRole.id,
+                    menuId: menu.id,
+                    isActive: true,
+                })
+            )
+        );
+
         const userRoleList = await db.query.userRoles.findMany({
             where: (userRoles, { eq }) => eq(userRoles.userId, newUser?.id),
             columns: {

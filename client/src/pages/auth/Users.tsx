@@ -247,8 +247,15 @@ export default function Users() {
                             users?.map((user) => (
                                 <TableRow key={user.id}>
                                     <TableCell>
-                                        <Avatar className="h-10 w-10">
-                                            <AvatarImage src={user.image} />
+                                        <Avatar className="h-10 w-10 border-4 border-white shadow-lg ring-2 ring-gray-100 dark:border-slate-900 dark:ring-slate-800">
+                                            <AvatarImage
+                                                loading="lazy"
+                                                src={
+                                                    user?.image ? `/api/users/${user?.id}/photo`
+                                                        : undefined
+                                                }
+                                                alt={getInitials(user?.firstName ?? "", user?.lastName ?? "")}
+                                            />
                                             <AvatarFallback>
                                                 {getInitials(user.firstName, user.lastName)}
                                             </AvatarFallback>

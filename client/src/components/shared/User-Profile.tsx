@@ -28,8 +28,6 @@ export default function UserProfile() {
 
   return (
     <div className="flex-1 space-y-2 bg-[#F9FAFB] dark:bg-slate-950 min-h-screen">
-      {/* <FileLoadingDialog open={fileOperationInProgress} />
-      <Header title="My Profile" /> */}
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-2 p-3">
         {/* Profile Overview + Quick Stats */}

@@ -13,6 +13,8 @@ router.get("/get-user-by-id/:id", userController.getUserById);
 router.post("/change-password/:id", userController.changePassword);
 router.post("/reset-password/:id",userController.resetPassword);
 
+router.get("/get-all-users-with-pagination",userController.getAllUserByTenantWithPagination)
+
 
 
 export default router;

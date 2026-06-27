@@ -1,6 +1,6 @@
 import { db } from "@server/db/connection";
-import { roleMenus } from "@server/db/schema";
-import { eq } from "drizzle-orm";
+import { roleMenus, userMenus } from "@server/db/schema";
+import { eq, and } from "drizzle-orm";
 import logger from "../../utils/logger";
 
 export class RoleAccessService {
@@ -72,4 +72,68 @@ export class RoleAccessService {
         }
     }
 
+    async getAllMenuByUserId(userId: string) {
+        if (!userId) throw new Error("userId is required");
+
+        try {
+            const result = await db
+                .select({
+                    userId: userMenus.userId,
+                    menuId: userMenus.menuId,
+                })
+                .from(userMenus)
+                .where(and(eq(userMenus.userId, userId), eq(userMenus.overrideType, "allow")));
+
+            return {
+                userId,
+                menuIds: result.map((r) => r.menuId)
+            };
+        } catch (error: any) {
+            logger.error("Error fetching role menus", {
+                message: error?.message,
+                stack: error?.stack,
+            });
+            throw new Error("Error fetching role menus");
+        }
+    }
+    async saveUserRoleAccess(data: {
+        userId: string;
+        menuIds: string[];
+        tenantId?: string;
+    }) {
+        if (!data.userId) throw new Error("userId is required");
+        if (!Array.isArray(data.menuIds)) {
+            throw new Error("menuIds must be an array");
+        }
+
+        try {
+            return await db.transaction(async (tx) => {
+                // 1. Delete existing mappings (optionally tenant-safe)
+                await tx
+                    .delete(userMenus)
+                    .where(eq(userMenus.userId, data.userId));
+
+                // 2. Insert new mappings
+                if (data.menuIds.length > 0) {
+                    await tx.insert(userMenus).values(
+                        data.menuIds.map((menuId) => ({
+                            userId: data.userId,
+                            menuId,
+                        }))
+                    );
+                }
+
+                return {
+                    userId: data.userId,
+                    menuIds: data.menuIds,
+                };
+            });
+        } catch (error: any) {
+            logger.error("Error saving user role access", {
+                message: error?.message,
+                stack: error?.stack,
+            });
+            throw new Error("Error saving user role access");
+        }
+    }
 }

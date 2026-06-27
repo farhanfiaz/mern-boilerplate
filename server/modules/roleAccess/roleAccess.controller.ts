@@ -78,4 +78,72 @@ export class RoleAccessController {
             );
         }
     };
+
+    getAllMenuByUserId = async (req: Request, res: Response) => {
+        try {
+            const { userId } = req.params;
+
+            logger.info(`Fetching menus for role: ${userId}`);
+
+            const result = await this.roleAccessService.getAllMenuByUserId(userId as string);
+
+            return sendResponse(res, HttpStatusCode.OK, true, "Menus fetched successfully", result);
+        } catch (error: any) {
+            logger.error("Error in getAllMenuByRoleId controller", {
+                message: error?.message,
+                stack: error?.stack,
+            });
+
+            return sendResponse(
+                res,
+                HttpStatusCode.INTERNAL_SERVER_ERROR,
+                false,
+                "Internal server error",
+                []
+            );
+        }
+    };
+
+    saveUserRoleAccess = async (req: Request, res: Response) => {
+        try {
+            const { userId, menuIds } = req.body;
+
+            const tenantId = req.user?.tenantId;
+            const loggedInUserId = req.user?.userId;
+
+            logger.info("Saving role access", {
+                userId,
+                menuCount: menuIds?.length,
+                tenantId,
+                loggedInUserId,
+            });
+
+            const result = await this.roleAccessService.saveUserRoleAccess({
+                userId,
+                menuIds,
+                tenantId,
+            });
+
+            return sendResponse(
+                res,
+                HttpStatusCode.OK,
+                true,
+                "User role access saved successfully",
+                result
+            );
+        } catch (error: any) {
+            logger.error("Error in saveRoleAccess controller", {
+                message: error?.message,
+                stack: error?.stack,
+            });
+
+            return sendResponse(
+                res,
+                HttpStatusCode.INTERNAL_SERVER_ERROR,
+                false,
+                "Internal server error",
+                []
+            );
+        }
+    };
 }

@@ -95,4 +95,11 @@ export class UserController {
         const result = await this.userService.resetPassword(String(id));
         return sendResponse(res as Response, HttpStatusCode.OK, true, "Password successfully reset..!", result);
     }
+
+    getAllUserByTenantWithPagination = async (req: Request, res: Response) => {
+        const { page = 1, limit = 10, search = '' } = req.query as any;
+        const tenantId = req.user?.tenantId ?? null;
+        const result = await this.userService.getUsersWithPagination(page, limit, search, String(tenantId));
+        return sendResponse(res as Response, HttpStatusCode.OK, true, "User list fetched successfully", result);
+    }
 }

@@ -1,5 +1,5 @@
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { createUser, deleteUser, getAllUserByTenant, updateRole } from "@/services/user-management.service";
+import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { createUser, deleteUser, getAllUserByTenant, getAllUserWithPagination, updateRole } from "@/services/user-management.service";
 import { User } from "@/types/user-management/user-management.types";
 import { useToast } from "../use-toast";
 import logger from "@/utils/logger";
@@ -26,7 +26,7 @@ export const useCreateUser = () => {
             });
         },
         onError: (err) => {
-            
+
             if (!err?.response?.data?.success) {
                 toast({
                     title: "Error",
@@ -82,5 +82,16 @@ export const useDeleteUser = () => {
                 variant: "destructive",
             });
         },
+    });
+};
+
+export const useUserByTenant = (search: any) => {
+    return useInfiniteQuery({
+        queryKey: ["users-pagination-new", search],
+        queryFn: ({ pageParam = 1 }) => getAllUserWithPagination({ page: pageParam, limit: 10, search: search }),
+        getNextPageParam: (lastPage) => {
+            return lastPage.pagination.hasNextPage ? lastPage.pagination.nextPage : undefined;
+        },
+        initialPageParam: 1
     });
 };

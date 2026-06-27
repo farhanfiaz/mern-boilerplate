@@ -4,28 +4,30 @@ import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/Button";
 
-import { useCreateMutationRoleAccess } from "@/hooks/mutations/useRoleAccessMutation";
+import { useCreateMutationUserRoleAccess } from "@/hooks/mutations/useRoleAccessMutation";
 import { useMenu } from "@/hooks/queries/useMenu";
-import { useRole } from "@/hooks/queries/useRole";
-import { useGetAssignMenuByRoleId } from "@/hooks/queries/useGetAssignMenuByRoleId";
+import { useGetAssignMenuByUserId } from "@/hooks/queries/useGetAssignMenuByRoleId";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { useUserByTenant } from "@/hooks/queries/useUserManagement";
+import { Search } from "lucide-react";
 
 export default function UserRoleAccess() {
     const [selectedUser, setSelectedUserId] = useState("");
     const [selectedParent, setSelectedParent] = useState("");
     const [selectedMenus, setSelectedMenus] = useState<string[]>([]);
     const [search, setSearch] = useState("");
+    const [searchTerm, setSearchTerm] = useState("");
 
-    const { mutate: createRoleAccess, isPending } =
-        useCreateMutationRoleAccess();
+    const { mutate: createUserRoleAccess, isPending } =
+        useCreateMutationUserRoleAccess();
 
     const { data: menusData } = useMenu();
-    const { data: userData } = useRole();
+    const { data: userData, fetchNextPage, hasNextPage, isFetchingNextPage, isLoading } = useUserByTenant(searchTerm);
 
-    const { data: assignMenuByRoleId } =
-        useGetAssignMenuByRoleId(selectedUser);
+    const { data: assignMenuByUserId } =
+        useGetAssignMenuByUserId(selectedUser);
 
-    const roles = userData?.data || [];
+    const users = userData?.pages?.flatMap((page: any) => page.users) || [];
     const menus = menusData?.menus || [];
 
     // ✅ RESET EVERYTHING WHEN ROLE CHANGES
@@ -36,12 +38,12 @@ export default function UserRoleAccess() {
 
     // ✅ SYNC SELECTED MENUS AFTER API LOAD
     useEffect(() => {
-        const menuIds = assignMenuByRoleId?.menuIds;
+        const menuIds = assignMenuByUserId?.menuIds;
 
         if (Array.isArray(menuIds)) {
             setSelectedMenus(menuIds);
         }
-    }, [assignMenuByRoleId?.menuIds]);
+    }, [assignMenuByUserId?.menuIds]);
 
     // ✅ PARENT MENUS
     const parentMenus = useMemo(() => {
@@ -148,8 +150,8 @@ export default function UserRoleAccess() {
     const handleSave = () => {
         if (!selectedUser) return;
 
-        createRoleAccess({
-            roleId: selectedUser,
+        createUserRoleAccess({
+            userId: selectedUser,
             menuIds: selectedMenus,
         });
     };
@@ -159,22 +161,129 @@ export default function UserRoleAccess() {
 
             {/* HEADER */}
             <div className="flex gap-3 justify-between">
-                <Select
-                    value={selectedUser}
-                    onValueChange={setSelectedUserId}
-                >
-                    <SelectTrigger className="w-[240px] bg-white">
-                        <SelectValue placeholder="Select User" />
-                    </SelectTrigger>
-                    <SelectContent>
-                        {roles.map((r: any) => (
-                            <SelectItem key={r.id} value={r.id}>
-                                {r.name}
-                            </SelectItem>
-                        ))}
-                    </SelectContent>
-                </Select>
+                <div className="relative w-full md:max-w-sm">
+                    <Select
+                        value={selectedUser}
+                        onValueChange={setSelectedUserId}
+                    >
+                        <SelectTrigger>
+                            <SelectValue placeholder="All users" />
+                        </SelectTrigger>
 
+                        <SelectContent className="bg-background border shadow-md w-[300px]">
+                            {/* SEARCH BOX */}
+                            <div className="flex items-center border-b px-3 pb-2 pt-1.5">
+                                <Search className="mr-2 h-4 w-4 opacity-50" />
+
+                                <Input
+                                    value={searchTerm}
+                                    onChange={(e) => setSearchTerm(e.target.value)}
+                                    placeholder="Search users..."
+                                    className="h-8 border-0 shadow-none focus-visible:ring-0"
+                                />
+                            </div>
+
+                            {/* SCROLL CONTAINER (FIXED) */}
+                            <div
+                                className="max-h-60 overflow-y-auto"
+                                onScroll={(e) => {
+                                    const el = e.currentTarget;
+
+                                    const isBottom =
+                                        el.scrollTop + el.clientHeight >= el.scrollHeight - 10;
+
+                                    if (isBottom && hasNextPage && !isFetchingNextPage) {
+                                        fetchNextPage();
+                                    }
+                                }}
+                            >
+                                {/* ALL OPTION */}
+                                {/* <SelectItem value="all">
+                            All tenants
+                        </SelectItem> */}
+
+                                {/* LOADING FIRST TIME */}
+                                {isLoading && (
+                                    <div className="px-3 py-2 text-sm text-muted-foreground">
+                                        Loading...
+                                    </div>
+                                )}
+
+                                {/* Tenant LIST */}
+                                {users.map((user: any) => (
+                                    <SelectItem
+                                        key={user.id}
+                                        value={user.id}
+                                    >
+                                        <div className="flex min-h-8 items-center gap-2">
+                                            {/* <Tooltip>
+                                        <TooltipTrigger asChild>
+                                            <span className="inline-flex shrink-0 rounded-full">
+                                                <Avatar className="h-8 w-8 sm:h-10 sm:w-10 rounded-full ring-2 sm:ring-3 ring-violet-300/50 ring-offset-2 ring-offset-white shadow-lg relative z-10 group-hover:violet-pink-400/70 transition-all duration-300">
+                                                    <AvatarImage
+                                                        loading="lazy"
+                                                        src={
+                                                            tenant.id
+                                                                ? `/api/tenants/${tenant.id}/photo`
+                                                                : undefined
+                                                        }
+                                                        alt={`${tenant.ownerName}`.trim() || "Tenant"}
+                                                        onError={(e) => {
+                                                            e.currentTarget.src = "";
+                                                        }}
+                                                    />
+                                                    <AvatarFallback className="bg-violet-700 text-white text-sm">
+                                                        {getInitials(tenant.ownerName || '', '')}
+                                                    </AvatarFallback>
+                                                </Avatar>
+                                            </span>
+                                        </TooltipTrigger>
+                                        <TooltipContent side="right" sideOffset={6} className="z-[100] max-w-xs border-violet-200/80 shadow-lg">
+                                            <p className="font-medium leading-snug">
+                                                {[tenant.ownerName, tenant.name]
+                                                    .filter(Boolean)
+                                                    .join(" ")}
+                                            </p>
+                                            <p className="text-xs text-muted-foreground">
+                                                ({tenant.id}) - {tenant.email}
+                                            </p>
+                                        </TooltipContent>
+                                    </Tooltip> */}
+                                            <span className="font-medium">
+                                                {user.firstName} {user.lastName}
+                                            </span>
+                                            {/* <span className="text-xs text-muted-foreground">
+                                        ({tenant.id})
+                                    </span> */}
+                                        </div>
+                                    </SelectItem>
+                                ))}
+
+                                {/* LOAD MORE */}
+                                {isFetchingNextPage && (
+                                    <div className="px-3 py-2 text-sm text-muted-foreground">
+                                        Loading more...
+                                    </div>
+                                )}
+
+                                {/* END STATE */}
+                                {!hasNextPage && users.length > 0 && (
+                                    <div className="px-3 py-2 text-sm text-muted-foreground">
+                                        No more users
+                                    </div>
+                                )}
+
+                                {/* EMPTY STATE */}
+                                {!isLoading && users.length === 0 && (
+                                    <div className="px-3 py-2 text-sm text-muted-foreground">
+                                        No users found
+                                    </div>
+                                )}
+                            </div>
+                        </SelectContent>
+                    </Select>
+                </div>
+                
                 <Input
                     className="max-w-sm bg-white"
                     placeholder="Search child menus..."

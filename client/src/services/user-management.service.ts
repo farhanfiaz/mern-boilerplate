@@ -49,3 +49,17 @@ export const inActiveUser = async (id: string): Promise<User> => {
     }
     return response.data;
 }
+
+export const getAllUserWithPagination = async (params: { page: number; limit: number; search: string }): Promise<any> => {
+    const response = await http.get<any>(
+        `${ENDPOINTS.USER_MANAGEMENT.GET_ALL_USERS_WITH_PAGINATION}?${new URLSearchParams({
+            page: params.page.toString(),
+            limit: params.limit.toString(),
+            search: params.search,
+        }).toString()}`
+    );
+    if (!response.success) {
+        throw new Error(response.message);
+    }
+    return response.data;
+}

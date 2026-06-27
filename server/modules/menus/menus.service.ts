@@ -1,7 +1,7 @@
 import { eq, asc, and } from "drizzle-orm";
 import { getMenusDto } from "./menus.types";
 import { db } from "@server/db/connection";
-import { menus, roleMenus, userRoles, users } from "@server/db/schema";
+import { menus, roleMenus, userMenus, userRoles, users } from "@server/db/schema";
 
 export class MenusService {
     constructor() {
@@ -17,6 +17,29 @@ export class MenusService {
         };
     }
     async getUserMenusByRoleId(userId: string, roleId: string): Promise<getMenusDto> {
+        const getUserMenus = await db.selectDistinct(
+            {
+                id: menus.id,
+                name: menus.name,
+                parentId: menus.parentId,
+                groupLabel: menus.groupLabel,
+                icon: menus.icon,
+                url: menus.url,
+                sortOrder: menus.sortOrder,
+                isActive: menus.isActive,
+                isAction: menus.isAction
+            }
+        )
+            .from(userMenus)
+            .innerJoin(menus, and(eq(menus.id, userMenus.menuId), eq(userMenus.userId, userId)))
+            .innerJoin(users, and(eq(users.id, userMenus.userId), eq(users.isActive, true)))
+            .where(and(eq(menus.isActive, true), eq(userMenus.overrideType, "allow")))
+            .orderBy(asc(menus.sortOrder));
+        if (getUserMenus) {
+            return {
+                menus: getUserMenus,
+            };
+        }
         const getMenus = await db.selectDistinct(
             {
                 id: menus.id,

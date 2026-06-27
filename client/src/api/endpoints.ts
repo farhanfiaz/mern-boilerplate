@@ -15,9 +15,9 @@ export const ENDPOINTS = {
     REGISTER: `${PREFIX}/auth/register`,
     PROFILE: `${PREFIX}/auth/profile`,
     REFRESH: `${PREFIX}/auth/refresh-token`,
-    EMAILUNIQUEVALIDATE:`${PREFIX}/auth/email-validate`,
-    TENANTSLUGUNIQUEVALIDATE:`${PREFIX}/auth/tenant-slug-validate`,
-    TENANTNAMEUNIQUEVALIDATE:`${PREFIX}/auth/tenant-name-validate`,
+    EMAILUNIQUEVALIDATE: `${PREFIX}/auth/email-validate`,
+    TENANTSLUGUNIQUEVALIDATE: `${PREFIX}/auth/tenant-slug-validate`,
+    TENANTNAMEUNIQUEVALIDATE: `${PREFIX}/auth/tenant-name-validate`,
   },
   SIDEBAR: {
     GET_USER_MENUS: `${PREFIX}/menus/get-user-menus`
@@ -49,9 +49,12 @@ export const ENDPOINTS = {
     IN_ACTIVE_USER: `${PREFIX}/user/in-active-user`,
     CHANGEPASSWORD: `${PREFIX}/user/change-password`,
     RESETPASSWORD: `${PREFIX}/user/reset-password`,
+    GET_ALL_USERS_WITH_PAGINATION: `${PREFIX}/user/get-all-users-with-pagination`
   },
   ROLE_ACCESS: {
     SAVE_ROLE_ACCESS: `${PREFIX}/role-access/save-role-access`,
     GET_ALL_MENU_BY_ROLE_ID: `${PREFIX}/role-access/get-all-menu-by-role-id`,
+    GET_ALL_MENU_BY_USER_ID: `${PREFIX}/role-access/get-all-menu-by-user-id`,
+    SAVE_User_ROLE_ACCESS: `${PREFIX}/role-access/save-user-role-access`,
   },
 } as const;

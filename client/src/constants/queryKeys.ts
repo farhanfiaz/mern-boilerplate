@@ -8,4 +8,5 @@ export const queryKeys = {
     allTenants: (page: number, pageSize: number, search: string) =>
         [ALL_TENANTS_QUERY_KEY, { page, pageSize, search }] as const,
     assignMenuByRoleById: (roleId: string) => ["assign-menu-by-role-id", roleId] as const,
+    assignMenuByUserId: (userId: string) => ["assign-menu-by-user-id", userId] as const,
 };

@@ -1,7 +1,7 @@
 import { db } from "@server/db/connection";
 import { userRoles, users } from "@server/db/schema";
 import bcrypt from "bcryptjs";
-import { count, desc, eq, ilike, and, or, ne } from "drizzle-orm";
+import { count, desc, eq, ilike, and, or, ne, sql } from "drizzle-orm";
 
 export class UserService {
     constructor() {
@@ -218,5 +218,52 @@ export class UserService {
             .where(eq(users.id, userId));
 
         return temporaryPassword;
+    }
+    async getUsersWithPagination(page: number = 1, limit: number = 10, search?: string, tenantId?: string): Promise<{
+        users: any[];
+        pagination: {
+            nextPage: number;
+            hasNextPage: boolean;
+        };
+    }> {
+        const offset = (page - 1) * limit;
+
+        const searchTerm =
+            search && search.trim() !== '' ? `%${search.trim()}%` : null;
+
+        const baseFilter = searchTerm
+            ? or(
+                ilike(users.firstName, searchTerm),
+                ilike(users.lastName, searchTerm),
+                ilike(users.email, searchTerm),
+                ilike(users.username, searchTerm),
+                ilike(users.phone, searchTerm)
+            )
+            : undefined;
+
+        const [data, totalResult] = await Promise.all([
+            db
+                .select()
+                .from(users)
+                .where(and(eq(users.tenantId, tenantId!), eq(users.isDeleted, false), baseFilter))
+                .orderBy(desc(users.createdAt))
+                .limit(limit)
+                .offset(offset),
+
+            db
+                .select({ count: count() })
+                .from(users)
+                .where(and(eq(users.tenantId, tenantId!), eq(users.isDeleted, false), baseFilter)),
+        ]);
+
+        const total = Number(totalResult[0].count);
+
+        return {
+            users: data,
+            pagination: {
+                nextPage: page < total ? page + 1 : 0,
+                hasNextPage: page < total
+            },
+        }
     }
 }

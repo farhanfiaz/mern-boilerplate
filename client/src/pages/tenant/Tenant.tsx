@@ -31,13 +31,14 @@ import {
 
 import { PaginatedTenants, Tenant } from "@/types/tenant/tenant.types";
 import { Loader2, Pencil, Plus, Search, Trash2 } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { tenantSchema } from "@/validations/tenant.validations";
 import { useAllTenants } from "@/hooks/queries/useTenant";
 import { useCreateTenant, useDeleteTenant, useEditTenant, useInActivateTenant } from "@/hooks/mutations/useTenantMutations";
 import logger from "@/utils/logger";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { getInitials } from "@/utils/utils";
+import { useTenanNameUniqueMutation, useTenantSlugUniqueMutation } from "@/hooks/mutations/useAuthMutation";
 
 export default function TenantPage() {
     /* ---------------- MODAL ---------------- */
@@ -192,6 +193,69 @@ export default function TenantPage() {
         }
     };
 
+    const { mutate: tenantSlugUniqueValidate, isPending: isTenantSlugValidate, isError: isTenantSlugValidError } = useTenantSlugUniqueMutation();
+    useEffect(() => {
+        if (form.slug) {
+            tenantSlugUniqueValidate(form.slug, {
+                onSuccess: (resp) => {
+                    if (resp.isUnique) {
+                        setErrors((prev) => ({
+                            ...prev,
+                            slug: "",
+                        }));
+                    } else {
+                        setErrors((prev) => ({
+                            ...prev,
+                            slug: resp.message,
+                        }));
+                    }
+                },
+                onError: (err) => {
+                    setErrors((prev) => ({
+                        ...prev,
+                        slug: err.message,
+                    }));
+                    logger.error(err);
+                }
+            });
+        }
+    }, [form.slug]);
+    const { mutate: tenantNameUniqueValidate, isPending: isTenantNameValidate, isError: isTenantNameValidError } = useTenanNameUniqueMutation();
+    useEffect(() => {
+        if (form.name) {
+            tenantNameUniqueValidate(form.name, {
+                onSuccess: (resp) => {
+                    if (resp.isUnique) {
+                        setErrors((prev) => ({
+                            ...prev,
+                            name: "",
+                        }));
+                    } else {
+                        setErrors((prev) => ({
+                            ...prev,
+                            name: resp.message || "Name already exists",
+                        }));
+                    }
+                },
+                onError: (err) => {
+                    if (!err.response.data.success) {
+                        setErrors((prev) => ({
+                            ...prev,
+                            name: err.response.data.message || "Name already exists",
+                        }));
+                    } else {
+                        setErrors((prev) => ({
+                            ...prev,
+                            name: "",
+                        }));
+                    }
+                    logger.error(err.response.data);
+
+                }
+            });
+        }
+    }, [form.name]);
+
     /* ---------------- UI ---------------- */
     return (
         <div className="p-6 space-y-6 bg-gray-50 min-h-screen">
@@ -247,18 +311,18 @@ export default function TenantPage() {
 
                                 <TableCell>
                                     <Avatar className="h-10 w-10 border-4 border-white shadow-lg ring-2 ring-gray-100 dark:border-slate-900 dark:ring-slate-800">
-                                            <AvatarImage
-                                                loading="lazy"
-                                                src={
-                                                    tenant.logo ? `${tenant.logo}`
-                                                        : undefined
-                                                }
-                                                alt={getInitials(tenant?.name ?? "", "")}
-                                            />
-                                            <AvatarFallback>
-                                                {getInitials(tenant?.name ?? "", "")}
-                                            </AvatarFallback>
-                                        </Avatar>
+                                        <AvatarImage
+                                            loading="lazy"
+                                            src={
+                                                tenant.logo ? `${tenant.logo}`
+                                                    : undefined
+                                            }
+                                            alt={getInitials(tenant?.name ?? "", "")}
+                                        />
+                                        <AvatarFallback>
+                                            {getInitials(tenant?.name ?? "", "")}
+                                        </AvatarFallback>
+                                    </Avatar>
                                 </TableCell>
 
                                 <TableCell className="font-medium">

@@ -56,7 +56,14 @@ export class TenantController {
         if (!tenant.name || !tenant.slug || !tenant.website) {
             return sendResponse(res as Response, HttpStatusCode.BAD_REQUEST, false, "Tenant name, slug and type are required", []);
         }
-
+        const isTenantNameExist = await this.tenantService.tenantNameIsExist(tenant.name);
+        if (!isTenantNameExist) {
+            return sendResponse(res as Response, HttpStatusCode.BAD_REQUEST, false, "Tenant name already exist.", []);
+        }
+        const isTenantSlugExist = await this.tenantService.tenantNameIsExist(tenant.slug);
+        if (!isTenantSlugExist) {
+            return sendResponse(res as Response, HttpStatusCode.BAD_REQUEST, false, "Tenant slug already exist.", []);
+        }
         const createdTenant = await this.tenantService.createTenant(tenant);
         return sendResponse(res as Response, HttpStatusCode.OK, true, "Tenant created successfully", createdTenant);
     }

@@ -3,11 +3,14 @@ import { HttpStatusCode } from "@server/utils/httpStatusCode";
 import { Request, Response } from "express";
 import { UserService } from "./user.service";
 import logger from "@/utils/logger";
+import { AuthService } from "../auth/auth.service";
 
 export class UserController {
     private userService: UserService;
+    private authService: AuthService;
     constructor() {
         this.userService = new UserService();
+        this.authService = new AuthService();
     }
 
     getAllUserByTenant = async (req: Request, res: Response) => {
@@ -22,6 +25,10 @@ export class UserController {
         try {
             const { firstName, lastName, email, username, phone, roleId } = req.body;
             const tenantId = req.user?.tenantId ?? null;
+            const isEmailExist = await this.authService.emailIsExist(email);
+            if (!isEmailExist) {
+                return sendResponse(res as Response, HttpStatusCode.BAD_REQUEST, false, "email already exist.", []);
+            }
             const result = await this.userService.createUser({
                 firstName,
                 lastName,

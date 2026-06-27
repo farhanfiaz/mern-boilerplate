@@ -40,6 +40,8 @@ import logger from "@/utils/logger";
 import { useUserManagement, useCreateUser, useUpdateUser, useDeleteUser } from "@/hooks/queries/useUserManagement";
 import { useResetPasswordMutation } from "@/hooks/mutations/useUserMutation";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { userSchema } from "@/validations/register.validation";
+import { useEmailUniqueMutation } from "@/hooks/mutations/useAuthMutation";
 
 export default function Users() {
 
@@ -51,6 +53,7 @@ export default function Users() {
     const [editing, setEditing] = useState(false);
     const [editingId, setEditingId] = useState<string | null>(null);
     const [deleteId, setDeleteId] = useState<string | null>(null);
+    const [errors, setErrors] = useState<Record<string, string>>({});
 
     const [form, setForm] = useState({
         firstName: "",
@@ -77,6 +80,7 @@ export default function Users() {
     /* ---------------- ADD ---------------- */
 
     const handleAdd = () => {
+        setErrors({});
         setEditing(false);
         setEditingId(null);
 
@@ -94,6 +98,7 @@ export default function Users() {
     /* ---------------- EDIT ---------------- */
 
     const handleEdit = (user: User) => {
+        setErrors({});
         setEditing(true);
         setEditingId(user.id);
 
@@ -112,6 +117,21 @@ export default function Users() {
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
+        const result = userSchema.safeParse(form);
+
+        if (!result.success) {
+            const fieldErrors: Record<string, string> = {};
+
+            result.error.issues.forEach((err) => {
+                const field = err.path[0] as string;
+                fieldErrors[field] = err.message;
+            });
+
+            setErrors(fieldErrors);
+            return;
+        }
+
+        setErrors({});
 
         try {
             if (editing && editingId) {
@@ -189,6 +209,35 @@ export default function Users() {
             setCopied(false);
         }, 2000);
     };
+
+    const { mutate: emailUniqueValidate, isPending: isEmailValidate, isError: isEmailValidError } = useEmailUniqueMutation();
+    useEffect(() => {
+        if (form.email) {
+            emailUniqueValidate(form.email, {
+                onSuccess: (resp) => {
+                    if (resp.isUnique) {
+                        setErrors((prev) => ({
+                            ...prev,
+                            email: "",
+                        }));
+                    } else {
+                        setErrors((prev) => ({
+                            ...prev,
+                            email: resp.message || "Email already exists",
+                        }));
+                    }
+                },
+                onError: (err) => {
+                    setErrors((prev) => ({
+                            ...prev,
+                            email: err.message || "Email already exists",
+                        }));
+                    logger.error(err.response.data);
+
+                }
+            });
+        }
+    }, [form.email]);
     /* ---------------- UI ---------------- */
 
     return (
@@ -336,6 +385,9 @@ export default function Users() {
                                 setForm({ ...form, firstName: e.target.value })
                             }
                         />
+                        {errors.firstName && (
+                            <p className="text-sm text-red-500">{errors.firstName}</p>
+                        )}
 
                         <Input
                             placeholder="Last Name"
@@ -344,6 +396,9 @@ export default function Users() {
                                 setForm({ ...form, lastName: e.target.value })
                             }
                         />
+                        {errors.lastName && (
+                            <p className="text-sm text-red-500">{errors.lastName}</p>
+                        )}
 
                         <Input
                             placeholder="Email"
@@ -352,6 +407,9 @@ export default function Users() {
                                 setForm({ ...form, email: e.target.value })
                             }
                         />
+                        {errors.email && (
+                            <p className="text-sm text-red-500">{errors.email}</p>
+                        )}
 
                         <Input
                             placeholder="Username"

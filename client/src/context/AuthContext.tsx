@@ -130,7 +130,7 @@ export const AuthProvider = ({ children }: Props) => {
       } catch (err: any) {
         toast({
           title: "Registration failed",
-          description: err?.message ?? "Registration failed",
+          description: err?.response?.data?.message ?? "Registration failed",
           variant: "destructive",
         });
 

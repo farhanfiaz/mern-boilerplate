@@ -15,6 +15,9 @@ export const ENDPOINTS = {
     REGISTER: `${PREFIX}/auth/register`,
     PROFILE: `${PREFIX}/auth/profile`,
     REFRESH: `${PREFIX}/auth/refresh-token`,
+    EMAILUNIQUEVALIDATE:`${PREFIX}/auth/email-validate`,
+    TENANTSLUGUNIQUEVALIDATE:`${PREFIX}/auth/tenant-slug-validate`,
+    TENANTNAMEUNIQUEVALIDATE:`${PREFIX}/auth/tenant-name-validate`,
   },
   SIDEBAR: {
     GET_USER_MENUS: `${PREFIX}/menus/get-user-menus`

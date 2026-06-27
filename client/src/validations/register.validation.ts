@@ -4,10 +4,20 @@ import z from "zod";
 
 export const registerSchema = z.object({
   // Tenant
-  tenantName: z.string().min(2),
-  tenantSlug: z.string().min(2),
-  tenantDescription: z.string().optional(),
-  tenantWebsite: z.string().optional(),
+  tenantName: z.string().trim()
+    .min(2, "Name must be at least 2 characters"),
+  tenantSlug: z.string().trim()
+    .min(2, "Slug is required")
+    .regex(
+      /^[a-z0-9-]+$/,
+      "Slug can only contain lowercase letters, numbers and hyphens"
+    ),
+  tenantDescription: z.string().trim()
+    .max(500, "Description cannot exceed 500 characters")
+    .optional(),
+  tenantWebsite: z.string().url("Please enter a valid URL")
+    .optional()
+    .or(z.literal("")),
   tenantLogo: z.any().optional(),
 
   // User

@@ -24,10 +24,22 @@ export class AuthController {
         return sendResponse(res as Response, HttpStatusCode.OK, true, "Login successful", user);
     }
     register = async (req: Request, res: Response) => {
-        const { email, password, firstName, lastName, tenantName, tenantDescription, tenantWebsite,tenantSlug } = req.body;
+        const { email, password, firstName, lastName, tenantName, tenantDescription, tenantWebsite, tenantSlug } = req.body;
         const userImage = req.file;
-        if (!tenantName || !tenantDescription || !tenantWebsite || !tenantSlug) {
-            return sendResponse(res as Response, HttpStatusCode.BAD_REQUEST, false, "Tenant name, slug and type are required", []);
+        if (!tenantName || !tenantSlug) {
+            return sendResponse(res as Response, HttpStatusCode.BAD_REQUEST, false, "Tenant name, slug are required", []);
+        }
+        const isTenantNameUnique = await this.tenantService.tenantNameIsExist(tenantName);
+        if (!isTenantNameUnique) {
+            return sendResponse(res as Response, HttpStatusCode.BAD_REQUEST, false, "Tenant name already exist.", []);
+        }
+        const isTenantSlugUnique = await this.tenantService.tenantSlugIsExist(tenantSlug);
+        if (!isTenantSlugUnique) {
+            return sendResponse(res as Response, HttpStatusCode.BAD_REQUEST, false, "Tenant slug already exist.", []);
+        }
+        const isEmailUnique = await this.authService.emailIsExist(email);
+        if (!isEmailUnique) {
+            return sendResponse(res as Response, HttpStatusCode.BAD_REQUEST, false, "email already exist.", []);
         }
         const tenant = await this.tenantService.createTenant({
             name: tenantName,
@@ -57,5 +69,44 @@ export class AuthController {
             return sendResponse(res as Response, HttpStatusCode.UNAUTHORIZED, false, "Invalid refresh token");
         }
         return sendResponse(res as Response, HttpStatusCode.OK, true, "Refresh token successful", data);
+    }
+    emailValidate = async (req: Request, res: Response) => {
+        const { email } = req.body;
+        const isEmailUnique = await this.authService.emailIsExist(email);
+        if (isEmailUnique) {
+            return sendResponse(res as Response, HttpStatusCode.OK, true, "email is unique", {
+                isUnique: true
+            });
+        } else {
+            return sendResponse(res as Response, HttpStatusCode.OK, false, "email already takken.", {
+                isUnique: false
+            });
+        }
+    }
+    tenantSlugValidate = async (req: Request, res: Response) => {
+        const { slug } = req.body;
+        const isTenantSlugUnique = await this.tenantService.tenantSlugIsExist(slug);
+        if (isTenantSlugUnique) {
+            return sendResponse(res as Response, HttpStatusCode.OK, true, "slug is unique", {
+                isUnique: true
+            });
+        } else {
+            return sendResponse(res as Response, HttpStatusCode.OK, false, "slug already takken.", {
+                isUnique: false
+            });
+        }
+    }
+    tenantNameValidate = async (req: Request, res: Response) => {
+        const { name } = req.body;
+        const isTenantNameUnique = await this.tenantService.tenantNameIsExist(name);
+        if (isTenantNameUnique) {
+            return sendResponse(res as Response, HttpStatusCode.OK, true, "tenant name is unique", {
+                isUnique: true
+            });
+        } else {
+            return sendResponse(res as Response, HttpStatusCode.BAD_REQUEST, false, "tenant name already takken.", {
+                isUnique: false
+            });
+        }
     }
 }

@@ -38,13 +38,13 @@ export class TenantService {
                         name: tenants.name,
                         description: tenants.description,
                         logo: tenants.logo,
-                        ownerId: users.tenantId??"",
+                        ownerId: users.tenantId ?? "",
                         ownerName: sql`${users.firstName} || ' ' || ${users.lastName}`,
                     }
                 )
                 .from(tenants)
-                 .leftJoin(users, eq(tenants.id, users.tenantId))
-                 //.innerJoin(roles, and(eq(roles.tenantId, tenants.id), eq(roles.id, selectedRole)))
+                .leftJoin(users, eq(tenants.id, users.tenantId))
+                //.innerJoin(roles, and(eq(roles.tenantId, tenants.id), eq(roles.id, selectedRole)))
                 .where(baseFilter)
                 .orderBy(desc(tenants.createdAt))
                 .limit(limit)
@@ -89,7 +89,7 @@ export class TenantService {
                         name: tenants.name,
                         description: tenants.description,
                         logo: tenants.logo,
-                        ownerId: users.tenantId??"",
+                        ownerId: users.tenantId ?? "",
                         ownerName: sql`${users.firstName} || ' ' || ${users.lastName}`,
                     }
                 )
@@ -381,4 +381,12 @@ export class TenantService {
         return updatedTenant;
     }
 
+    async tenantNameIsExist(name: string): Promise<boolean> {
+        const [tenant] = await db.select({ name: tenants.name }).from(tenants).where(eq(tenants.name, name));
+        return tenant?.name == null;
+    }
+    async tenantSlugIsExist(slug: string): Promise<boolean> {
+        const [tenant] = await db.select({ slug: tenants.slug }).from(tenants).where(eq(tenants.slug, slug));
+        return tenant?.slug == null;
+    }
 }

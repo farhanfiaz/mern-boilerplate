@@ -1,4 +1,4 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { useAuth } from "../../context/AuthContext";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -8,6 +8,8 @@ import { Label } from "@/components/ui/label";
 import { Link, useLocation } from "wouter";
 import { Camera } from "lucide-react";
 import { RegisterForm, registerSchema } from "@/validations/register.validation";
+import { useEmailUniqueMutation, useTenanNameUniqueMutation, useTenantSlugUniqueMutation } from "@/hooks/mutations/useAuthMutation";
+import logger from "@/utils/logger";
 
 
 export default function Register() {
@@ -97,6 +99,94 @@ export default function Register() {
       setLoading(false);
     }
   };
+  const { mutate: tenantSlugUniqueValidate, isPending: isTenantSlugValidate, isError: isTenantSlugValidError } = useTenantSlugUniqueMutation();
+  const tenantSlug = form.watch("tenantSlug");
+  const { mutate: tenantNameUniqueValidate, isPending: isTenantNameValidate, isError: isTenantNameValidError } = useTenanNameUniqueMutation();
+  const tenantName = form.watch("tenantName");
+  const { mutate: emailUniqueValidate, isPending: isEmailValidate, isError: isEmailValidError } = useEmailUniqueMutation();
+  const email = form.watch("email");
+  useEffect(() => {
+    if (!tenantName) return;
+    const timer = setTimeout(async () => {
+      tenantNameUniqueValidate(tenantName, {
+        onSuccess: (resp) => {
+          if (resp.isUnique) {
+            form.clearErrors("tenantName");
+          } else {
+            form.setError("tenantName", {
+              type: "server",
+              message: resp.message,
+            });
+          }
+        },
+        onError: (err) => {
+          if (!err.response.data.success) {
+            form.setError("tenantName", {
+              type: "server",
+              message: err.response.data.message,
+            });
+          } else {
+            form.clearErrors("tenantName");
+          }
+          logger.error(err.response.data);
+        }
+      });
+    }, 500);
+    return () => clearTimeout(timer);
+  }, [tenantName]);
+  useEffect(() => {
+    if (!tenantSlug) return;
+
+    const timer = setTimeout(async () => {
+      tenantSlugUniqueValidate(tenantSlug, {
+        onSuccess: (resp) => {
+          if (resp.isUnique) {
+            form.clearErrors("tenantSlug");
+          } else {
+            form.setError("tenantSlug", {
+              type: "server",
+              message: resp.message,
+            });
+          }
+        },
+        onError: (err) => {
+          form.setError("tenantSlug", {
+            type: "server",
+            message: err.message,
+          });
+          logger.error(err);
+        }
+      });
+    }, 500);
+
+    return () => clearTimeout(timer);
+  }, [tenantSlug]);
+  useEffect(() => {
+    if (!email) return;
+
+    const timer = setTimeout(async () => {
+      emailUniqueValidate(email, {
+        onSuccess: (resp) => {
+          if (resp.isUnique) {
+            form.clearErrors("email");
+          } else {
+            form.setError("email", {
+              type: "server",
+              message: resp.message,
+            });
+          }
+        },
+        onError: (err) => {
+          form.setError("email", {
+            type: "server",
+            message: err.message,
+          });
+          logger.error(err);
+        }
+      });
+    }, 500);
+    return () => clearTimeout(timer);
+  }, [email]);
 
   /* ---------------- UI ---------------- */
 
@@ -134,21 +224,41 @@ export default function Register() {
             <div>
               <Label>Tenant Name</Label>
               <Input {...form.register("tenantName")} />
+              {form.formState.errors.tenantName && (
+                <p className="text-red-500 text-xs mt-1">
+                  {form.formState.errors.tenantName.message}
+                </p>
+              )}
             </div>
 
             <div>
               <Label>Slug</Label>
               <Input {...form.register("tenantSlug")} />
+              {form.formState.errors.tenantSlug && (
+                <p className="text-red-500 text-xs mt-1">
+                  {form.formState.errors.tenantSlug.message}
+                </p>
+              )}
             </div>
 
             <div>
               <Label>Description</Label>
               <Input {...form.register("tenantDescription")} />
+              {form.formState.errors.tenantDescription && (
+                <p className="text-red-500 text-xs mt-1">
+                  {form.formState.errors.tenantDescription.message}
+                </p>
+              )}
             </div>
 
             <div>
               <Label>Website</Label>
               <Input {...form.register("tenantWebsite")} />
+              {form.formState.errors.tenantWebsite && (
+                <p className="text-red-500 text-xs mt-1">
+                  {form.formState.errors.tenantWebsite.message}
+                </p>
+              )}
             </div>
 
           </div>
@@ -195,22 +305,42 @@ export default function Register() {
               <div>
                 <Label>First Name</Label>
                 <Input {...form.register("firstName")} />
+                {form.formState.errors.firstName && (
+                  <p className="text-red-500 text-xs mt-1">
+                    {form.formState.errors.firstName.message}
+                  </p>
+                )}
               </div>
 
               <div>
                 <Label>Last Name</Label>
                 <Input {...form.register("lastName")} />
+                {form.formState.errors.lastName && (
+                  <p className="text-red-500 text-xs mt-1">
+                    {form.formState.errors.lastName.message}
+                  </p>
+                )}
               </div>
             </div>
 
             <div>
               <Label>Email</Label>
               <Input {...form.register("email")} />
+              {form.formState.errors.email && (
+                <p className="text-red-500 text-xs mt-1">
+                  {form.formState.errors.email.message}
+                </p>
+              )}
             </div>
 
             <div>
               <Label>Password</Label>
               <Input type="password" {...form.register("password")} />
+              {form.formState.errors.password && (
+                <p className="text-red-500 text-xs mt-1">
+                  {form.formState.errors.password.message}
+                </p>
+              )}
             </div>
 
             <Button className="w-full mt-4" disabled={loading}>

@@ -11,4 +11,8 @@ authRoutes.post("/register", authMiddleware.authLimiter, authMiddleware.uploadSi
 
 authRoutes.post("/refresh-token", authMiddleware.apiLimiter, authController.refreshToken);
 
+authRoutes.post("/tenant-slug-validate", authMiddleware.apiLimiter, authController.tenantSlugValidate);
+authRoutes.post("/tenant-name-validate", authMiddleware.apiLimiter, authController.tenantNameValidate);
+authRoutes.post("/email-validate", authMiddleware.apiLimiter, authController.emailValidate);
+
 export default authRoutes;

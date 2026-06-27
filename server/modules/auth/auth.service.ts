@@ -247,4 +247,8 @@ export class AuthService {
             refreshToken: refreshToken,
         };
     }
+    async emailIsExist(email: string): Promise<boolean> {
+        const [tenant] = await db.select({ email: users.email }).from(users).where(eq(users.email, email));
+        return tenant?.email == null;
+    }
 }

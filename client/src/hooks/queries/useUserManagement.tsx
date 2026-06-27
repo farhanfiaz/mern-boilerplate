@@ -2,6 +2,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { createUser, deleteUser, getAllUserByTenant, updateRole } from "@/services/user-management.service";
 import { User } from "@/types/user-management/user-management.types";
 import { useToast } from "../use-toast";
+import logger from "@/utils/logger";
 
 export const useUserManagement = (page: number, limit: number, search: string, status: string, roleId: string) => {
     return useQuery({
@@ -24,12 +25,16 @@ export const useCreateUser = () => {
                 variant: "success",
             });
         },
-        onError: () => {
-            toast({
-                title: "Error",
-                description: "Failed to create user",
-                variant: "destructive",
-            });
+        onError: (err) => {
+            
+            if (!err?.response?.data?.success) {
+                toast({
+                    title: "Error",
+                    description: err?.response?.data?.message || "Failed to create user",
+                    variant: "destructive",
+                });
+            }
+            logger.error(err);
         },
     });
 };

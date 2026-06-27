@@ -143,7 +143,11 @@ export default function Users() {
                     ...existingUser,
                     ...form,
                 }, {
-                    onSuccess: () => { },
+                    onSuccess: () => {
+                        setEditingId(null);
+                        setEditing(false);
+                        setOpen(false);
+                    },
                     onError: (error) => { }
                 });
             } else {
@@ -155,12 +159,11 @@ export default function Users() {
                     createdAt: new Date().toISOString(),
                     ...form,
                 }, {
-                    onSuccess: () => { },
+                    onSuccess: () => { setOpen(false); },
                     onError: (error) => { }
                 });
             }
 
-            setOpen(false);
         } catch (error) {
             logger.error(error);
         }
@@ -229,10 +232,10 @@ export default function Users() {
                 },
                 onError: (err) => {
                     setErrors((prev) => ({
-                            ...prev,
-                            email: err.message || "Email already exists",
-                        }));
-                    logger.error(err.response.data);
+                        ...prev,
+                        email: err.message || "Email already exists",
+                    }));
+                    logger.error(err.message);
 
                 }
             });

@@ -20,9 +20,9 @@ export function Tenant() {
 
     const tenant = tenantData?.pages?.flatMap((page: any) => page.tenants) || [];
     const distinctTenants = tenant.filter(
-  (tenant, index, arr) =>
-    index === arr.findIndex((t) => t.id === tenant.id)
-);
+        (tenant, index, arr) =>
+            index === arr.findIndex((t) => t.id === tenant.id)
+    );
     logger.info("Tenant data:", distinctTenants);
     const [selectedCompanyId, setSelectedCompanyId] = useState<string>(
         user?.user?.tenantId || ""
@@ -53,27 +53,6 @@ export function Tenant() {
 
     return (
         <div className="inline-flex mt-1 ml-[48px] lg:ml-0">
-            {/* <Select value={selectedCompanyId} onValueChange={handleChange}>
-                <SelectTrigger className="h-9 w-[180px] rounded-md border bg-white px-3 text-sm shadow-sm">
-                    <div className="flex items-center gap-2">
-                        <Building2 className="h-4 w-4 text-gray-500" />
-                        <SelectValue placeholder="Select company" />
-                    </div>
-                </SelectTrigger>
-                <SelectContent>
-                    {tenant && tenant.length > 0 ? (
-                        tenant.map((t: { id: string, name: string }) => (
-                            <SelectItem key={t.id} value={String(t.id)}>
-                                <div className="flex items-center gap-2">
-                                    <span>{t.name}</span>
-                                </div>
-                            </SelectItem>
-                        ))
-                    ) : (
-                        <div className="p-2 text-xs text-muted-foreground text-center">No companies found</div>
-                    )}
-                </SelectContent>
-            </Select> */}
             <Select
                 value={selectedCompanyId}
                 onValueChange={(value) => {
@@ -112,10 +91,6 @@ export function Tenant() {
                             }
                         }}
                     >
-                        {/* ALL OPTION */}
-                        {/* <SelectItem value="all">
-                            All tenants
-                        </SelectItem> */}
 
                         {/* LOADING FIRST TIME */}
                         {isLoading && (
@@ -129,47 +104,34 @@ export function Tenant() {
                             <SelectItem
                                 key={tenant.id}
                                 value={tenant.id}
+                                className="py-2"
                             >
-                                <div className="flex min-h-8 items-center gap-2">
-                                    {/* <Tooltip>
-                                        <TooltipTrigger asChild>
-                                            <span className="inline-flex shrink-0 rounded-full">
-                                                <Avatar className="h-8 w-8 sm:h-10 sm:w-10 rounded-full ring-2 sm:ring-3 ring-violet-300/50 ring-offset-2 ring-offset-white shadow-lg relative z-10 group-hover:violet-pink-400/70 transition-all duration-300">
-                                                    <AvatarImage
-                                                        loading="lazy"
-                                                        src={
-                                                            tenant.id
-                                                                ? `/api/tenants/${tenant.id}/photo`
-                                                                : undefined
-                                                        }
-                                                        alt={`${tenant.ownerName}`.trim() || "Tenant"}
-                                                        onError={(e) => {
-                                                            e.currentTarget.src = "";
-                                                        }}
-                                                    />
-                                                    <AvatarFallback className="bg-violet-700 text-white text-sm">
-                                                        {getInitials(tenant.ownerName || '', '')}
-                                                    </AvatarFallback>
-                                                </Avatar>
-                                            </span>
-                                        </TooltipTrigger>
-                                        <TooltipContent side="right" sideOffset={6} className="z-[100] max-w-xs border-violet-200/80 shadow-lg">
-                                            <p className="font-medium leading-snug">
-                                                {[tenant.ownerName, tenant.name]
-                                                    .filter(Boolean)
-                                                    .join(" ")}
-                                            </p>
-                                            <p className="text-xs text-muted-foreground">
-                                                ({tenant.id}) - {tenant.email}
-                                            </p>
-                                        </TooltipContent>
-                                    </Tooltip> */}
+                                <div className="flex items-center gap-3 w-full">
+                                    {/* Avatar */}
+                                    <span className="shrink-0">
+                                        <Avatar className="h-9 w-9 rounded-full ring-2 ring-violet-200 shadow-sm">
+                                            <AvatarImage
+                                                loading="lazy"
+                                                src={
+                                                    tenant?.logo
+                                                        ? tenant.logo
+                                                        : `/api/users/${tenant.id}/photo`
+                                                }
+                                                alt={tenant.name || "Tenant"}
+                                                onError={(e) => {
+                                                    e.currentTarget.src = "";
+                                                }}
+                                            />
+
+                                            <AvatarFallback className="bg-gradient-to-br from-violet-600 to-indigo-600 text-white text-xs font-semibold">
+                                                {getInitials(tenant.name || "", "")}
+                                            </AvatarFallback>
+                                        </Avatar>
+                                    </span>
                                     <span className="font-medium">
                                         {tenant.name}
                                     </span>
-                                    {/* <span className="text-xs text-muted-foreground">
-                                        ({tenant.id})
-                                    </span> */}
+
                                 </div>
                             </SelectItem>
                         ))}

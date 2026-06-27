@@ -36,13 +36,12 @@ import { useEffect, useState } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { useCreateMutationRole, useUpdateMutationRole, useDeleteMutationRole, useInActiveMutationRole, useRole } from "@/hooks/queries/useRole";
 import logger from "@/utils/logger";
+import { roleSchema } from "@/validations/register.validation";
 
 export default function Roles() {
 
-    const { toast } = useToast();
-
     /* ---------------- STATE ---------------- */
-    const [data, setData] = useState<AllRoles | null>(null);
+    const [errors, setErrors] = useState<Record<string, string>>({});
 
     const [search, setSearch] = useState("");
     const [page, setPage] = useState(1);
@@ -84,6 +83,7 @@ export default function Roles() {
 
     /* ---------------- ADD ---------------- */
     const handleAdd = () => {
+        setErrors({});
         setEditing(false);
         setEditingId(null);
         setForm({ name: "", description: "" });
@@ -92,6 +92,7 @@ export default function Roles() {
 
     /* ---------------- EDIT ---------------- */
     const handleEdit = (role: any) => {
+        setErrors({});
         setEditing(true);
         setEditingId(role.id);
 
@@ -106,7 +107,21 @@ export default function Roles() {
     /* ---------------- SAVE (CREATE / UPDATE) ---------------- */
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
+        const result = roleSchema.safeParse(form);
 
+        if (!result.success) {
+            const fieldErrors: Record<string, string> = {};
+
+            result.error.issues.forEach((err) => {
+                const field = err.path[0] as string;
+                fieldErrors[field] = err.message;
+            });
+
+            setErrors(fieldErrors);
+            return;
+        }
+
+        setErrors({});
         try {
             if (editing && editingId) {
                 if (!editingId || !form.name) {
@@ -326,6 +341,9 @@ export default function Roles() {
                                 setForm({ ...form, name: e.target.value })
                             }
                         />
+                        {errors.name && (
+                            <p className="text-sm text-red-500">{errors.name}</p>
+                        )}
 
                         <Input
                             placeholder="Description"
@@ -334,6 +352,9 @@ export default function Roles() {
                                 setForm({ ...form, description: e.target.value })
                             }
                         />
+                        {errors.description && (
+                            <p className="text-sm text-red-500">{errors.description}</p>
+                        )}
 
                         <div className="flex justify-end gap-2 pt-2">
                             <Button

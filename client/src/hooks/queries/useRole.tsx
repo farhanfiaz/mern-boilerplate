@@ -2,6 +2,7 @@ import { createRole, deleteRole, getAllRoles, inActiveRole, updateRole } from "@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useToast } from "../use-toast";
 import { CreateRolePayload, Role, UpdateRolePayload } from "@/types/role/role.types";
+import logger from "@/utils/logger";
 
 export const useRole = () => {
     const { data, isLoading, error } = useQuery({
@@ -25,11 +26,15 @@ export const useCreateMutationRole = () => {
             });
         },
         onError: (error: Error) => {
-            toast({
-                title: "Error",
-                variant: "destructive",
-                description: error.message ?? "Failed to create role"
-            });
+
+            if (!error?.response?.data?.success) {
+                toast({
+                    title: "Error",
+                    variant: "destructive",
+                    description: error?.response?.data?.message ?? "Failed to create role"
+                });
+            }
+            logger.error(error);
         },
     });
 };

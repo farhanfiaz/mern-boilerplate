@@ -39,3 +39,10 @@ export const userSchema = z.object({
 });
 
 export type UserFormData = z.infer<typeof userSchema>;
+
+export const roleSchema = z.object({
+  name: z.string().trim().min(2),
+  description: z.string().trim().max(256)
+});
+
+export type RoleFormData = z.infer<typeof roleSchema>;

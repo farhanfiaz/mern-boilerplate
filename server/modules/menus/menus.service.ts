@@ -35,7 +35,7 @@ export class MenusService {
             .innerJoin(users, and(eq(users.id, userMenus.userId), eq(users.isActive, true)))
             .where(and(eq(menus.isActive, true), eq(userMenus.overrideType, "allow")))
             .orderBy(asc(menus.sortOrder));
-        if (getUserMenus) {
+        if (getUserMenus.length>0) {
             return {
                 menus: getUserMenus,
             };

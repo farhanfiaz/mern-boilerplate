@@ -16,7 +16,7 @@ export default function MultipleRole() {
     const { user } = useAuth();
     const [, setLocation] = useLocation();
 
-    const [selectedRole, setSelectedRole] = useState<string>("");
+    const [selectedRole, setSelectedRole] = useState<string>(localStorage.getItem("selectedRole") ?? "");
 
     if (!user) return <Redirect to="/login" />;
 

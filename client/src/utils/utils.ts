@@ -15,7 +15,7 @@ export function getRoleName(roles: { id: string; name: string }[] | undefined): 
   if (!roles || roles.length === 0) {
     return "N/A";
   }
-  return roles?.find((role) => role.id === localStorage.getItem("selectedRole"))?.name || "N/A"
+  return roles?.find((role) => role.id === localStorage.getItem("selectedRole"))?.name?.toUpperCase() || "N/A"
 }
 
 export const fileToBase64 = (file: File): Promise<string> => {

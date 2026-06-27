@@ -116,7 +116,7 @@ export function Sidebar() {
 
                     <div className="min-w-0">
                         <p className="truncate text-sm font-medium text-sidebar-foreground">
-                            {user?.user?.name}
+                            {user?.user?.firstName} {user?.user?.lastName}
                         </p>
 
                         <p className="text-xs text-muted-foreground">

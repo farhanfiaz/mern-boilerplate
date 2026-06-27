@@ -45,9 +45,9 @@ export async function superAdminSeed() {
             .values({
                 email: superAdminEmail,
                 password: superAdminHashedPassword,
-                username: "super_admin",
-                firstName: "super_admin",
-                lastName: "super_admin",
+                username: "Super Admin",
+                firstName: "Super",
+                lastName: "Admin",
             })
             .returning();
 

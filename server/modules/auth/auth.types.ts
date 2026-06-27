@@ -8,7 +8,7 @@ export type RegisterDto = {
   password: string;
   firstName: string;
   lastName: string;
-  file: Express.Multer.File | null;
+  file: string | null;
   tenantId: string;
 };
 

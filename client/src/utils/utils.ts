@@ -17,3 +17,14 @@ export function getRoleName(roles: { id: string; name: string }[] | undefined): 
   }
   return roles?.find((role) => role.id === localStorage.getItem("selectedRole"))?.name || "N/A"
 }
+
+export const fileToBase64 = (file: File): Promise<string> => {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+
+    reader.readAsDataURL(file);
+
+    reader.onload = () => resolve(reader.result as string);
+    reader.onerror = (error) => reject(error);
+  });
+};

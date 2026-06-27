@@ -4,6 +4,8 @@ import { HttpStatusCode } from "@server/utils/httpStatusCode";
 import { Response } from "express";
 import { Request } from "express";
 import { TenantService } from "../tenants/tenant.service";
+import logger from "@/utils/logger";
+import { saveBase64Image } from "@server/utils/localStorage";
 
 export class AuthController {
     private authService: AuthService;
@@ -24,8 +26,8 @@ export class AuthController {
         return sendResponse(res as Response, HttpStatusCode.OK, true, "Login successful", user);
     }
     register = async (req: Request, res: Response) => {
-        const { email, password, firstName, lastName, tenantName, tenantDescription, tenantWebsite, tenantSlug } = req.body;
-        const userImage = req.file;
+        const { email, password, firstName, lastName, tenantName, tenantDescription, tenantWebsite, tenantSlug, tenantLogo, avatar } = req.body;
+
         if (!tenantName || !tenantSlug) {
             return sendResponse(res as Response, HttpStatusCode.BAD_REQUEST, false, "Tenant name, slug are required", []);
         }
@@ -41,16 +43,20 @@ export class AuthController {
         if (!isEmailUnique) {
             return sendResponse(res as Response, HttpStatusCode.BAD_REQUEST, false, "email already exist.", []);
         }
+        let userFile = null;
+        if (avatar) {
+            userFile = await saveBase64Image(avatar, "userImages");
+        }
         const tenant = await this.tenantService.createTenant({
             name: tenantName,
             slug: tenantSlug,
             description: tenantDescription,
             website: tenantWebsite,
-            logo: '',
+            logo: tenantLogo,
         });
         const user = await this.authService.register({
             email,
-            file: userImage ?? null,
+            file: userFile?.filePath ?? null,
             firstName,
             lastName,
             password,

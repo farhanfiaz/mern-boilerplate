@@ -62,8 +62,7 @@ export default function UserProfile() {
                       <AvatarImage
                         loading="lazy"
                         src={
-                          user?.user.userId?`/api/users/${user?.user.userId}/photo`
-                          : undefined
+                          user?.user?.userIamge ? user?.user?.userIamge : `/api/users/${user?.user?.userId}/photo`
                         }
                         alt={getInitials(user?.user?.firstName?? "", user?.user?.lastName??"")}
                       />

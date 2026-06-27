@@ -103,7 +103,7 @@ export function Sidebar() {
                 <div className="flex items-center gap-3">
                     <Avatar className="h-10 w-10 shrink-0 rounded-full ring-2 ring-violet-300/50">
                         <AvatarImage
-                            src={`/api/users/${user?.user?.userId}/photo`}
+                            src={user?.user?.userIamge ? user?.user?.userIamge : `/api/users/${user?.user?.userId}/photo`}
                             alt={user?.user?.name || "Profile"}
                             onError={(e) => {
                                 e.currentTarget.src = "";

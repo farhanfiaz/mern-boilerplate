@@ -9,6 +9,7 @@ export type User = {
     isActive: boolean;
     isDeleted: boolean;
     createdAt: string;
+    avatarUrl: string;
 };
 
 export type GetUserParams = {

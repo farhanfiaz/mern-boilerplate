@@ -178,7 +178,7 @@ export class AuthService {
                 password: hashedPassword,
                 firstName: data.firstName,
                 lastName: data.lastName,
-                avatarUrl: data.file?.filename ?? null,
+                avatarUrl: data.file ?? null,
                 username: data.email,
                 tenantId: data.tenantId
             })

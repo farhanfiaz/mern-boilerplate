@@ -1,10 +1,9 @@
 import { db } from "@server/db/connection";
-import { roles, tenants, users } from "@server/db/schema";
+import { tenants, users } from "@server/db/schema";
 import { and, count, desc, eq, ilike, ne, or, sql } from "drizzle-orm";
 import { ActiveTenant } from "./tenant.types";
-import * as fs from 'fs/promises';
-import * as path from 'path';
 import logger from "@/utils/logger";
+import { deleteFile, hasBase64String, saveBase64Image } from "@server/utils/localStorage";
 
 export class TenantService {
     constructor() {
@@ -269,34 +268,11 @@ export class TenantService {
     async createTenant(
         tenant: any
     ): Promise<any> {
-        const file = tenant.logo;
-        if (file) {
-            const uploadDir = path.join(process.cwd(), 'uploads', 'tenants');
 
-            await fs.mkdir(uploadDir, { recursive: true });
-
-            // Handle data:image/png;base64,... format
-            const matches = file.match(
-                /^data:(image\/[a-zA-Z0-9+.-]+);base64,(.+)$/
-            );
-
-            if (!matches) {
-                throw new Error('Invalid base64 image format');
-            }
-
-            const mimeType = matches[1];
-            const base64Data = matches[2];
-
-            const extension = mimeType.split('/')[1];
-            const fileName = `${Date.now()}.${extension}`;
-            const filePath = path.join(uploadDir, fileName);
-
-            const buffer = Buffer.from(base64Data, 'base64');
-
-            await fs.writeFile(filePath, buffer);
-
-            // Save relative path in DB
-            tenant.logo = `/uploads/tenants/${fileName}`;
+        let tenantFile = null;
+        if (tenant.logo) {
+            tenantFile = await saveBase64Image(tenant.logo, "TenantImages");
+            tenant.logo = tenantFile.filePath;
         }
 
         const [createdTenant] = await db
@@ -308,44 +284,35 @@ export class TenantService {
     }
 
     async updateTenant(tenantId: string, tenant: any): Promise<any> {
-        const file = tenant.logo;
-        if (file) {
-            const uploadDir = path.join(process.cwd(), 'uploads', 'tenants');
-
-            await fs.mkdir(uploadDir, { recursive: true });
-
-            // Handle data:image/png;base64,... format
-            const matches = file.match(
-                /^data:(image\/[a-zA-Z0-9+.-]+);base64,(.+)$/
-            );
-
-            if (!matches) {
-                throw new Error('Invalid base64 image format');
-            }
-
-            const mimeType = matches[1];
-            const base64Data = matches[2];
-
-            const extension = mimeType.split('/')[1];
-            const fileName = `${Date.now()}.${extension}`;
-            const filePath = path.join(uploadDir, fileName);
-
-            const buffer = Buffer.from(base64Data, 'base64');
-
-            await fs.writeFile(filePath, buffer);
-
-            // Save relative path in DB
-            tenant.logo = `/uploads/tenants/${fileName}`;
-        }
 
         const [tenentNameExist] = await db.select().from(tenants).where(and(ne(tenants.id, tenantId), eq(tenants.name, tenant.name)));
         if (tenentNameExist) {
             throw new Error("Tenant name already exist.");
         }
+
         const [tenentSlugExist] = await db.select().from(tenants).where(and(ne(tenants.id, tenantId), eq(tenants.slug, tenant.slug)));
         if (tenentSlugExist) {
             throw new Error("Tenant slug already exist.");
         }
+
+        const [existingTenant] = await db
+            .select()
+            .from(tenants)
+            .where(eq(tenants.id, tenantId));
+
+        if (!existingTenant) {
+            throw new Error("Tenant not found.");
+        }
+
+        let tenantFile = null;
+        if (tenant.logo && hasBase64String(tenant.logo)) {
+            if (existingTenant.logo) {
+                await deleteFile(existingTenant.logo);
+            }
+            tenantFile = await saveBase64Image(tenant.logo, "TenantImages");
+            tenant.logo = tenantFile.filePath;
+        }
+
         const [updatedTenant] = await db
             .update(tenants)
             .set(tenant)

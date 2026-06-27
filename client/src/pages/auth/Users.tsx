@@ -303,8 +303,7 @@ export default function Users() {
                                             <AvatarImage
                                                 loading="lazy"
                                                 src={
-                                                    user?.image ? `/api/users/${user?.id}/photo`
-                                                        : undefined
+                                                    user?.avatarUrl ? user?.avatarUrl : `/api/users/${user?.id}/photo`
                                                 }
                                                 alt={getInitials(user?.firstName ?? "", user?.lastName ?? "")}
                                             />

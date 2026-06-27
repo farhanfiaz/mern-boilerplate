@@ -16,7 +16,7 @@ export const authMiddleware = {
   authenticateToken,
   checkTotalSize,
   uploadSingleFile: upload.single("file"),
-  uploadMultiFiles: upload.array("file",5),
+  uploadMultiFiles: upload.array("file", 5),
   securityHeaders,
   authLimiter,
   passwordResetLimiter,

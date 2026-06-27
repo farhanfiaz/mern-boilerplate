@@ -10,6 +10,7 @@ import { Camera } from "lucide-react";
 import { RegisterForm, registerSchema } from "@/validations/register.validation";
 import { useEmailUniqueMutation, useTenanNameUniqueMutation, useTenantSlugUniqueMutation } from "@/hooks/mutations/useAuthMutation";
 import logger from "@/utils/logger";
+import { fileToBase64 } from "@/utils/utils";
 
 
 export default function Register() {
@@ -44,26 +45,31 @@ export default function Register() {
 
   /* ---------------- Image Handlers ---------------- */
 
-  const handleAvatar = (e: any) => {
+  const handleAvatar = async (e: any) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
     if (avatarPreview) URL.revokeObjectURL(avatarPreview);
 
-    const url = URL.createObjectURL(file);
-    setAvatarPreview(url);
-    form.setValue("avatar", file);
+    setAvatarPreview(URL.createObjectURL(file));
+
+    // Convert to Base64
+    const base64 = await fileToBase64(file);
+
+    form.setValue("avatar", base64);
   };
 
-  const handleLogo = (e: any) => {
+  const handleLogo = async (e: any) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
     if (logoPreview) URL.revokeObjectURL(logoPreview);
 
-    const url = URL.createObjectURL(file);
-    setLogoPreview(url);
-    form.setValue("tenantLogo", file);
+    setLogoPreview(URL.createObjectURL(file));
+
+    const base64 = await fileToBase64(file);
+
+    form.setValue("tenantLogo", base64);
   };
 
   /* ---------------- Submit ---------------- */
@@ -79,7 +85,7 @@ export default function Register() {
       formData.append("tenantSlug", data.tenantSlug || "");
       formData.append("tenantDescription", data.tenantDescription || "");
       formData.append("tenantWebsite", data.tenantWebsite || "");
-
+      
       if (data.tenantLogo) {
         formData.append("tenantLogo", data.tenantLogo);
       }

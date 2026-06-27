@@ -1,7 +1,7 @@
 import { db } from "@server/db/connection";
 import { userRoles, users } from "@server/db/schema";
 import bcrypt from "bcryptjs";
-import { count, desc, eq, ilike, and, or } from "drizzle-orm";
+import { count, desc, eq, ilike, and, or, ne } from "drizzle-orm";
 
 export class UserService {
     constructor() {
@@ -84,7 +84,10 @@ export class UserService {
         if (!user) {
             throw new Error("User not found");
         }
-
+        const [userEmailValidate] = await db.select().from(users).where(and(ne(users.id, id), eq(users.email, email)));
+        if (userEmailValidate) {
+            throw new Error("email already exist.");
+        }
         const [updatedUser] = await db.update(users).set({
             firstName,
             lastName,

@@ -1,6 +1,6 @@
 import { db } from "@server/db/connection";
 import { roles, tenants, users } from "@server/db/schema";
-import { and, count, desc, eq, ilike, or, sql } from "drizzle-orm";
+import { and, count, desc, eq, ilike, ne, or, sql } from "drizzle-orm";
 import { ActiveTenant } from "./tenant.types";
 import * as fs from 'fs/promises';
 import * as path from 'path';
@@ -338,6 +338,14 @@ export class TenantService {
             tenant.logo = `/uploads/tenants/${fileName}`;
         }
 
+        const [tenentNameExist] = await db.select().from(tenants).where(and(ne(tenants.id, tenantId), eq(tenants.name, tenant.name)));
+        if (tenentNameExist) {
+            throw new Error("Tenant name already exist.");
+        }
+        const [tenentSlugExist] = await db.select().from(tenants).where(and(ne(tenants.id, tenantId), eq(tenants.slug, tenant.slug)));
+        if (tenentSlugExist) {
+            throw new Error("Tenant slug already exist.");
+        }
         const [updatedTenant] = await db
             .update(tenants)
             .set(tenant)

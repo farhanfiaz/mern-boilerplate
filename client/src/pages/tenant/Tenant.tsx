@@ -29,7 +29,7 @@ import {
     TableRow,
 } from "@/components/ui/table";
 
-import { PaginatedTenants, Tenant } from "@/types/tenant/tenant.types";
+import { Tenant } from "@/types/tenant/tenant.types";
 import { Loader2, Pencil, Plus, Search, Trash2 } from "lucide-react";
 import { useEffect, useState } from "react";
 import { tenantSchema } from "@/validations/tenant.validations";
@@ -195,7 +195,7 @@ export default function TenantPage() {
 
     const { mutate: tenantSlugUniqueValidate, isPending: isTenantSlugValidate, isError: isTenantSlugValidError } = useTenantSlugUniqueMutation();
     useEffect(() => {
-        if (form.slug) {
+        if (form.slug && !editing) {
             tenantSlugUniqueValidate(form.slug, {
                 onSuccess: (resp) => {
                     if (resp.isUnique) {
@@ -222,7 +222,7 @@ export default function TenantPage() {
     }, [form.slug]);
     const { mutate: tenantNameUniqueValidate, isPending: isTenantNameValidate, isError: isTenantNameValidError } = useTenanNameUniqueMutation();
     useEffect(() => {
-        if (form.name) {
+        if (form.name && !editing) {
             tenantNameUniqueValidate(form.name, {
                 onSuccess: (resp) => {
                     if (resp.isUnique) {

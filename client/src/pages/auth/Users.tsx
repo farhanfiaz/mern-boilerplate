@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -215,7 +215,7 @@ export default function Users() {
 
     const { mutate: emailUniqueValidate, isPending: isEmailValidate, isError: isEmailValidError } = useEmailUniqueMutation();
     useEffect(() => {
-        if (form.email) {
+        if (form.email && !editing) {
             emailUniqueValidate(form.email, {
                 onSuccess: (resp) => {
                     if (resp.isUnique) {

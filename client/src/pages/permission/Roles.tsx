@@ -29,11 +29,8 @@ import {
     TableRow,
 } from "@/components/ui/table";
 
-import { Role, AllRoles } from "@/types/role/role.types";
-
 import { Pencil, Plus, Search, Trash2 } from "lucide-react";
-import { useEffect, useState } from "react";
-import { useToast } from "@/hooks/use-toast";
+import {  useState } from "react";
 import { useCreateMutationRole, useUpdateMutationRole, useDeleteMutationRole, useInActiveMutationRole, useRole } from "@/hooks/queries/useRole";
 import logger from "@/utils/logger";
 import { roleSchema } from "@/validations/register.validation";

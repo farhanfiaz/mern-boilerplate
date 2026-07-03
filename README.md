@@ -69,16 +69,9 @@ The client will be available at `http://localhost:5173` and the API at `http://l
 - Upload files to `/api/uploads` (multipart/form‑data).
 - Use the React UI components to interact with the API (login, dashboard, file manager, etc.).
 
-## 📖 Documentation
-
-Further documentation can be found in the `docs/` folder (not included in this starter) or generated via TypeDoc.
-
 ## 🤝 Contributing
 
 Contributions are welcome! Please open issues and submit pull requests following the conventional commit style.
 
-## 📄 License
-
-This project is licensed under the MIT License.
 
 

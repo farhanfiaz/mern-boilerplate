@@ -1,5 +1,6 @@
 import { Router } from "express";
 import { UserController } from "./user.controller";
+import { authMiddleware } from "../../middleware";
 
 const router = Router();
 const userController = new UserController();
@@ -11,9 +12,10 @@ router.delete("/delete-user/:id", userController.deleteUser);
 router.put("/in-active-user/:id", userController.inActiveUser);
 router.get("/get-user-by-id/:id", userController.getUserById);
 router.post("/change-password/:id", userController.changePassword);
-router.post("/reset-password/:id",userController.resetPassword);
+router.post("/reset-password/:id", userController.resetPassword);
 
-router.get("/get-all-users-with-pagination",userController.getAllUserByTenantWithPagination)
+router.get("/get-all-users-with-pagination", userController.getAllUserByTenantWithPagination);
+router.post("/upload-user-photo/:id", authMiddleware.uploadSingleFile, userController.uploadUserPhoto);
 
 
 

@@ -102,4 +102,11 @@ export class UserController {
         const result = await this.userService.getUsersWithPagination(page, limit, search, String(tenantId));
         return sendResponse(res as Response, HttpStatusCode.OK, true, "User list fetched successfully", result);
     }
+
+    uploadUserPhoto = async (req: Request, res: Response) => {
+        const { id } = req.params;
+        const file = req.file;
+        const result = await this.userService.uploadUserPhoto(String(id), file);
+        return sendResponse(res as Response, HttpStatusCode.OK, true, "User photo uploaded successfully", result);
+    }
 }

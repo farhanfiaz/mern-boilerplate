@@ -63,3 +63,14 @@ export const getAllUserWithPagination = async (params: { page: number; limit: nu
     }
     return response.data;
 }
+
+export const uploadUserPhoto = async (userId: string, file: File): Promise<string> => {
+    const formData = new FormData();
+    formData.append("file", file);
+
+    const response = await http.post<string>(`${ENDPOINTS.USER_MANAGEMENT.UPLOAD_USER_PHOTO}/${userId}`, formData);
+    if (!response.success) {
+        throw new Error(response.message);
+    }
+    return response.data;
+}

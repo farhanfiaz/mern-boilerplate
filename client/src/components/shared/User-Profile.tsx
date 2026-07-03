@@ -2,15 +2,17 @@ import { useAuth } from "@/context/AuthContext";
 import { Card, CardContent, CardHeader, CardTitle } from "../ui/card";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "../ui/tooltip";
 import { Button } from "../ui/Button";
-import { Activity, Badge, Camera, Edit, Form, Save, Shield, User, X, Lock, Mail } from "lucide-react";
+import { Activity, Badge, Camera, Edit, Save, Shield, User, X, Lock, Mail } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "../ui/tabs";
-import { FormControl, FormField, FormItem, FormLabel, FormMessage } from "../ui/form";
+import { FormControl, FormField, FormItem, FormLabel, FormMessage, Form } from "../ui/form";
 import { Input } from "../ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../ui/select";
 import { Textarea } from "../ui/textarea";
-import { useState } from "react";
-import { getInitials } from "@/utils/utils";
+import { useEffect, useState } from "react";
+import { getInitials, getRoleName } from "@/utils/utils";
+import { useGetUserById, useUploadUserPhoto } from "@/hooks/queries/useUserManagement";
+import { useForm } from "react-hook-form";
 
 
 
@@ -20,11 +22,51 @@ export default function UserProfile() {
   const [isEditingProfile, setIsEditingProfile] = useState(false);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
 
-  const [profileForm, setprofileForm] = useState({
-        
-    });
+  const {
+    mutate: uploadUserPhoto,
+    isPending: isPhotoUploading,
+    isError: isPhotoUploadingError,
+  } = useUploadUserPhoto();
 
-  
+  const {
+    data: userInfo,
+    isLoading: isUserInfoLoading,
+    isError: isUserInfoError,
+  } = useGetUserById(user?.user?.userId ?? "");
+
+  const profileForm = useForm({
+    defaultValues: {
+      firstName: userInfo?.firstName || "",
+      lastName: userInfo?.lastName || "",
+      email: userInfo?.email || "",
+      phone: userInfo?.phone || "",
+    },
+  });
+
+  useEffect(() => {
+    if (userInfo) {
+      profileForm.reset({
+        firstName: userInfo.firstName || "",
+        lastName: userInfo.lastName || "",
+        email: userInfo.email || "",
+        phone: userInfo.phone || "",
+      });
+    }
+  }, [userInfo, profileForm]);
+
+
+
+  const handlePhotoUpload = async () => {
+    if (!selectedFile || !user?.user?.userId) {
+      return;
+    }
+    uploadUserPhoto({ id: user.user.userId, file: selectedFile });
+  };
+
+  const onSubmit = (data: any) => {
+    setIsEditingProfile(false);
+  };
+
 
   return (
     <div className="flex-1 space-y-2 bg-[#F9FAFB] dark:bg-slate-950 min-h-screen">
@@ -64,10 +106,10 @@ export default function UserProfile() {
                         src={
                           user?.user?.userIamge ? user?.user?.userIamge : `/api/users/${user?.user?.userId}/photo`
                         }
-                        alt={getInitials(user?.user?.firstName?? "", user?.user?.lastName??"")}
+                        alt={getInitials(user?.user?.firstName ?? "", user?.user?.lastName ?? "")}
                       />
                       <AvatarFallback className="bg-sky-100 text-xl font-bold text-blue-800 dark:bg-sky-950 dark:text-blue-200">
-                        {getInitials(user?.user?.firstName?? "", user?.user?.lastName??"")}
+                        {getInitials(user?.user?.firstName ?? "", user?.user?.lastName ?? "")}
                       </AvatarFallback>
                     </Avatar>
                     {user?.user.userId && (
@@ -107,27 +149,28 @@ export default function UserProfile() {
                     <div className="flex gap-2">
                       <Button
                         size="sm"
-                        // onClick={handlePhotoUpload}
-                        // disabled={uploadPhotoMutation.isPending}
+                        onClick={handlePhotoUpload}
+                        disabled={isPhotoUploading}
                         className="w-full sm:w-auto flex items-center gap-2 shadow-lg hover:shadow-xl transition-all hover:scale-105 duration-200 bg-violet-700 text-white"
                       >
-                        {/* {uploadPhotoMutation.isPending ? (
-                          <>
-                            <div className="animate-spin rounded-full h-3 w-3 border-b-2 border-white mr-2"></div>
-                            Uploading...
-                          </>
-                        ) : (
-                          <>
-                            <Save className="h-3 w-3 mr-2" />
-                            Save Photo
-                          </>
-                        )} */}
+                        {
+                          isPhotoUploading ? (
+                            <>
+                              <div className="animate-spin rounded-full h-3 w-3 border-b-2 border-white mr-2"></div>
+                              Uploading...
+                            </>
+                          ) : (
+                            <>
+                              <Save className="h-3 w-3 mr-2" />
+                              Save Photo
+                            </>
+                          )}
                       </Button>
                       <Button
                         size="sm"
                         variant="outline"
                         onClick={() => setSelectedFile(null)}
-                        // disabled={uploadPhotoMutation.isPending}
+                        disabled={isPhotoUploading}
                         className="flex-1"
                       >
                         Cancel
@@ -136,28 +179,28 @@ export default function UserProfile() {
                   </div>
                 )}
 
-                {/* <div className="w-full space-y-2 text-center">
+                {<div className="w-full space-y-2 text-center">
                   <div>
                     <h3 className="text-lg font-bold tracking-tight text-slate-900 dark:text-slate-100">
-                      {getDisplayName()}
+                      {(user?.user?.firstName ?? "") + " " + (user?.user?.lastName ?? "")}
                     </h3>
-                    {user.employee?.position && (
+                    {/* {user.employee?.position && (
                       <p className="mt-0 text-sm text-slate-500 dark:text-slate-400">{user.employee.position}</p>
-                    )}
+                    )} */}
                   </div>
                   <div className="flex flex-row flex-wrap items-center justify-center gap-2">
                     <Badge
-                      className={`${getRoleColor(selectedRole || "")} rounded-full px-3 py-1 text-xs font-semibold`}
+                      className={`rounded-full px-3 py-1 text-xs font-semibold`}
                     >
-                      {selectedRole?.replace("_", " ").toUpperCase() || ""}
+                      {getRoleName(user?.user?.role)}
                     </Badge>
-                    {user.employee?.joinDate && (
+                    {/* {user.employee?.joinDate && (
                       <span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-medium text-slate-600 dark:bg-slate-800 dark:text-slate-300">
                         Joined {format(new Date(user.employee.joinDate), "MMM yyyy")}
                       </span>
-                    )}
+                    )} */}
                   </div>
-                </div> */}
+                </div>}
 
                 <div className="w-full space-y-3 border-t border-slate-200 pt-5 dark:border-slate-700">
                   <div className="flex items-start gap-3 text-left">
@@ -255,70 +298,135 @@ export default function UserProfile() {
                 <CardContent className="p-3">
                   {isEditingProfile ? (
                     <Form {...profileForm}>
-                     
+                      <form onSubmit={profileForm.handleSubmit(onSubmit)} className="space-y-4">
+                        <FormField
+                          control={profileForm.control}
+                          name="firstName"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>First Name</FormLabel>
+                              <FormControl>
+                                <Input placeholder="John" {...field} />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+
+                        <FormField
+                          control={profileForm.control}
+                          name="lastName"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Last Name</FormLabel>
+                              <FormControl>
+                                <Input placeholder="Doe" {...field} />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+
+                        <FormField
+                          control={profileForm.control}
+                          name="email"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Email</FormLabel>
+                              <FormControl>
+                                <Input
+                                  type="email"
+                                  placeholder="john@example.com"
+                                  {...field}
+                                />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+
+                        <FormField
+                          control={profileForm.control}
+                          name="phone"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Phone</FormLabel>
+                              <FormControl>
+                                <Input
+                                  placeholder="+1 234 567 890"
+                                  {...field}
+                                />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+
+                        <Button type="submit">Save Changes</Button>
+                      </form>
                     </Form>
                   ) : (
                     <div className="space-y-2">
-                      {/* <div className="grid grid-cols-1 gap-2 md:grid-cols-2">
+                      <div className="grid grid-cols-1 gap-2 md:grid-cols-2">
                         <div className="min-w-0">
                           <label className="block text-xs text-slate-500 dark:text-slate-400">Full Name</label>
                           <p className="mt-1 text-sm font-semibold text-slate-900 dark:text-slate-100">
-                            {user.employee?.firstName} {user.employee?.middleName} {user.employee?.lastName}
+                            {userInfo?.firstName} {userInfo?.lastName}
                           </p>
                         </div>
-                        <div className="min-w-0">
+                        {/* <div className="min-w-0">
                           <label className="block text-xs text-slate-500 dark:text-slate-400">Date of Birth</label>
                           <p className="mt-1 text-sm font-semibold text-slate-900 dark:text-slate-100">
                             {user.employee?.dateOfBirth ? user.employee.dateOfBirth : "N/A"}
                           </p>
-                        </div>
-                        <div className="min-w-0">
+                        </div> */}
+                        {/* <div className="min-w-0">
                           <label className="block text-xs text-slate-500 dark:text-slate-400">Marital Status</label>
                           <p className="mt-1 text-sm font-semibold text-slate-900 dark:text-slate-100">
                             {user.employee?.maritalStatus
                               ? user.employee.maritalStatus.charAt(0).toUpperCase() + user.employee.maritalStatus.slice(1)
                               : "N/A"}
                           </p>
-                        </div>
+                        </div> */}
                         <div className="min-w-0">
                           <label className="block text-xs text-slate-500 dark:text-slate-400">Email Address</label>
                           <p className="mt-1 break-all text-sm font-semibold text-slate-900 dark:text-slate-100">
-                            {user.employee?.email}
+                            {userInfo?.email}
                           </p>
                         </div>
-                        {user.employee?.emergencyContactName && (
+                        {/* {user.employee?.emergencyContactName && (
                           <div className="min-w-0 md:col-span-2">
                             <label className="block text-xs text-slate-500 dark:text-slate-400">Emergency Contact</label>
                             <p className="mt-1 text-sm font-semibold text-slate-900 dark:text-slate-100">
                               {user.employee.emergencyContactName}
                             </p>
                           </div>
-                        )}
-                        {user.employee?.phone && (
+                        )} */}
+                        {/* {user.employee?.phone && (
                           <div className="min-w-0">
                             <label className="block text-xs text-slate-500 dark:text-slate-400">Phone Number</label>
                             <p className="mt-1 text-sm font-semibold text-slate-900 dark:text-slate-100">
                               {user.employee.phone}
                             </p>
                           </div>
-                        )}
-                        {user.employee?.emergencyContactPhone && (
+                        )} */}
+                        {/* {user.employee?.emergencyContactPhone && (
                           <div className="min-w-0">
                             <label className="block text-xs text-slate-500 dark:text-slate-400">Emergency Phone</label>
                             <p className="mt-1 text-sm font-semibold text-slate-900 dark:text-slate-100">
                               {user.employee.emergencyContactPhone}
                             </p>
                           </div>
-                        )}
-                        <div className="min-w-0 md:col-span-2 pb-3">
+                        )} */}
+                        {/* <div className="min-w-0 md:col-span-2 pb-3">
                           <label className="block text-xs text-slate-500 dark:text-slate-400">Address</label>
                           <p className="mt-1 text-sm font-semibold text-slate-900 dark:text-slate-100">
                             {user.employee?.address || "N/A"}
                           </p>
-                        </div>
+                        </div> */}
                       </div>
 
-                      {user.employee && (
+                      {/* {user.employee && (
                         <div className="mt-3 border-t border-slate-200 pt-3 dark:border-slate-700">
                           <h4 className="mb-2 text-lg font-semibold text-slate-900 dark:text-slate-100">Work Information</h4>
                           <div className="grid grid-cols-1 gap-2 md:grid-cols-2">
@@ -360,7 +468,7 @@ export default function UserProfile() {
                         </div>
                       )} */}
                     </div>
-                 )}
+                  )}
                 </CardContent>
               </Card>
 
@@ -419,7 +527,7 @@ export default function UserProfile() {
 
             {/* Documents Tab */}
             <TabsContent value="documents" className="space-y-2 mt-3">
-              
+
             </TabsContent>
 
             {/* Security Tab */}
@@ -621,6 +729,6 @@ export default function UserProfile() {
           </Tabs>
         </div>
       </div>
-    </div>
+    </div >
   );
 }

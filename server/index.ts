@@ -91,6 +91,14 @@ app.get(
     res.json({ message: "Hello from backend API" });
   }
 );
+app.get(
+  "/index.js",
+  authMiddleware.apiLimiter,
+  (req: Request, res: Response) => {
+    const baseUrl = `${req.protocol}://${req.get("host")}`;
+    res.redirect(baseUrl);
+  }
+);
 
 app.use(
   "/api",

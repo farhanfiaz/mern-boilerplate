@@ -1,5 +1,5 @@
 import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { createUser, deleteUser, getAllUserByTenant, getAllUserWithPagination, updateRole } from "@/services/user-management.service";
+import { createUser, deleteUser, getAllUserByTenant, getAllUserWithPagination, getUserById, updateRole, uploadUserPhoto } from "@/services/user-management.service";
 import { User } from "@/types/user-management/user-management.types";
 import { useToast } from "../use-toast";
 import logger from "@/utils/logger";
@@ -25,7 +25,7 @@ export const useCreateUser = () => {
                 variant: "success",
             });
         },
-        onError: (err) => {
+        onError: (err: any) => {
 
             if (!err?.response?.data?.success) {
                 toast({
@@ -95,3 +95,37 @@ export const useUserByTenant = (search: any) => {
         initialPageParam: 1
     });
 };
+
+export const useGetUserById = (id: string) => {
+    return useQuery({
+        queryKey: ['user', id],
+        queryFn: () => getUserById(id),
+        enabled: !!id,
+    });
+}
+
+export const useUploadUserPhoto = () => {
+    const { toast } = useToast();
+    return useMutation({
+        mutationFn: (data: { id: string; file: File }) => {
+            return uploadUserPhoto(data.id, data.file);
+        },
+        onSuccess: (data: any) => {
+            toast({
+                title: "Success",
+                description: "User photo uploaded successfully",
+                variant: "success",
+            });
+        },
+        onError: (err: any) => {
+            logger.error(err);
+            if (!err?.response?.data?.success) {
+                toast({
+                    title: "Error",
+                    description: err?.response?.data?.message || "Failed to create user",
+                    variant: "destructive",
+                });
+            }
+        }
+    });
+}

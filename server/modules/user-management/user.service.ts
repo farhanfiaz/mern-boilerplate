@@ -266,4 +266,15 @@ export class UserService {
             },
         }
     }
+
+    async uploadUserPhoto(userId: string, file: Express.Multer.File | undefined): Promise<string> {
+        const [user] = await db.select().from(users).where(eq(users.id, userId));
+        if (!user) {
+            throw new Error("User not found");
+        }
+        if (!file) {
+            throw new Error("No file uploaded.");
+        }
+        return "";
+    }
 }

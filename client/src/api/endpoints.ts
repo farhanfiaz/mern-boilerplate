@@ -49,7 +49,8 @@ export const ENDPOINTS = {
     IN_ACTIVE_USER: `${PREFIX}/user/in-active-user`,
     CHANGEPASSWORD: `${PREFIX}/user/change-password`,
     RESETPASSWORD: `${PREFIX}/user/reset-password`,
-    GET_ALL_USERS_WITH_PAGINATION: `${PREFIX}/user/get-all-users-with-pagination`
+    GET_ALL_USERS_WITH_PAGINATION: `${PREFIX}/user/get-all-users-with-pagination`,
+    UPLOAD_USER_PHOTO: `${PREFIX}/user/upload-user-photo`,
   },
   ROLE_ACCESS: {
     SAVE_ROLE_ACCESS: `${PREFIX}/role-access/save-role-access`,
